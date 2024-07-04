@@ -1,0 +1,16 @@
+transformers
+datasets
+evaluate
+rouge_score
+loralib
+peft
+papermill
+tqdm
+trl
+pydantic
+numpy
+scikit-learn
+setuptools
+accelerate
+weaviate-client
+deprecated
