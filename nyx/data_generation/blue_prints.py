@@ -65,19 +65,6 @@ class AbstractDataGenerator(ABC):
 
         try:
             self.labeller_model = (
-                AutoModelForSeq2SeqLM.from_pretrained(
-                    self.llm_model_name,
-                    torch_dtype=self.precision,
-                    device_map=self.distributed_state.device,
-                )
-                if self.multi_gpu_setup is True
-                else AutoModelForSeq2SeqLM.from_pretrained(
-                    self.llm_model_name, torch_dtype=self.precision
-                ).to(torch.device(self.device))
-            )
-
-        except ValueError:
-            self.labeller_model = (
                 AutoModelForCausalLM.from_pretrained(
                     self.llm_model_name,
                     torch_dtype=self.precision,
@@ -85,6 +72,19 @@ class AbstractDataGenerator(ABC):
                 )
                 if self.multi_gpu_setup is True
                 else AutoModelForCausalLM.from_pretrained(
+                    self.llm_model_name, torch_dtype=self.precision
+                ).to(torch.device(self.device))
+            )
+
+        except ValueError:
+            self.labeller_model = (
+                AutoModelForSeq2SeqLM.from_pretrained(
+                    self.llm_model_name,
+                    torch_dtype=self.precision,
+                    device_map=self.distributed_state.device,
+                )
+                if self.multi_gpu_setup is True
+                else AutoModelForSeq2SeqLM.from_pretrained(
                     self.llm_model_name, torch_dtype=self.precision
                 ).to(torch.device(self.device))
             )
