@@ -1,5 +1,4 @@
 transformers
-datasets
 evaluate
 rouge_score
 loralib
