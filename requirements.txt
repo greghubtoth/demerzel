@@ -13,3 +13,5 @@ setuptools
 accelerate
 weaviate-client
 deprecated
+optimum
+auto-gptq
