@@ -16,3 +16,4 @@ scikit-learn
 setuptools
 accelerate
 weaviate-client
+deprecated
