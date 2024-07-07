@@ -25,8 +25,6 @@ def precision_enumerator(requested_precision: str) -> torch.dtype or str:
         return torch.bfloat16
     elif requested_precision == 'int8':
         return torch.int8
-    elif requested_precision == 'int4':
-        return torch.int4
     elif requested_precision == 'auto':
         return 'auto'
     else:
