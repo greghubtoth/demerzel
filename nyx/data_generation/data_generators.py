@@ -8,6 +8,7 @@ from datasets import Dataset, DatasetDict, concatenate_datasets
 from deprecated import deprecated
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Weaviate
+from langchain_core.documents import Document
 
 from nyx.constants import COMMON_OUTPUT_PATHS, PROMPTS_COL, RM_TRAIN_DATA_PATH
 from nyx.data_generation.blue_prints import (AbstractDataGenerator,
@@ -487,27 +488,29 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             # max_new_tokens=self.max_new_tokens
         )
 
-    def add_examples_to_vector_db(self, dataset: DatasetDict, reverse: bool = False):
-        if len(self.doc_ids) == 0:
-            self.vectorstore = Weaviate.from_documents(
-                # Documents will be added later, as examples and insights are accumulated.
-                [],
-                self.embeddings,
-                weaviate_url="http://127.0.0.1:8079",
-            )
+    def set_up_retriever(self, documents: List[Document]):
 
-            self.example_retriever = self.vectorstore.as_retriever(
-                search_type=self.vdb_search_type,
-                search_kwargs={
-                    "k": 1,
-                    "where_filter": {
-                        "path": ["type"],
-                        "operator": "Equal",
-                        "valueString": "example",
-                    },
+        self.vectorstore = Weaviate.from_documents(
+            # Documents will be added later, as examples and insights are accumulated.
+            documents,
+            self.embeddings,
+            weaviate_url="http://127.0.0.1:8079",
+        )
+
+        self.example_retriever = self.vectorstore.as_retriever(
+            search_type=self.vdb_search_type,
+            search_kwargs={
+                "k": 1,
+                "where_filter": {
+                    "path": ["type"],
+                    "operator": "Equal",
+                    "valueString": "example",
                 },
-            )
+            },
+        )
+    def add_examples_to_vector_db(self, dataset: DatasetDict, reverse: bool = False):
         doc_ids_added = []
+
         successful_attempts = dataset.filter(
             lambda example: example["incorrect_prediction"].startswith("False")
         )
@@ -519,14 +522,21 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
             )
-            negative_ids = self.example_retriever.add_documents(documents=negative_docs)
-            doc_ids_added.extend(negative_ids)
+            if len(self.doc_ids) == 0:
+                self.set_up_retriever(documents=negative_docs)
+            else:
+                negative_ids = self.example_retriever.add_documents(documents=negative_docs)
+                doc_ids_added.extend(negative_ids)
 
         positive_docs = get_documents_from_data(
             successful_attempts, negative_examples=False
         )
-        positive_ids = self.example_retriever.add_documents(documents=positive_docs)
-        doc_ids_added.extend(positive_ids)
+        if len(self.doc_ids) == 0 and self.negative_examples is False:
+            self.set_up_retriever(documents=positive_docs)
+        else:
+            positive_ids = self.example_retriever.add_documents(documents=positive_docs)
+            doc_ids_added.extend(positive_ids)
+
 
         self.doc_ids.extend(doc_ids_added)
         if len(self.doc_ids) > self.max_vdb_documents:
