@@ -428,6 +428,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                     ordered_prompt=ordered_reasoning,
                     reversed_prompt=reversed_reasoning,
                     nth_retry=nth_retry,
+                    add_incorrect_prediction_column=True,
                 )
 
                 # always union / append the correctly classified dataset
