@@ -35,9 +35,9 @@ from nyx.data_loaders import HumanEvaluatedDataLoader
 
 RANDOM_SEED = 42
 # PRECISION = torch.float32
-PRECISION_NAME = 'bfloat16'
+PRECISION_NAME = 'auto'
 DEVICE = "cuda"
-LABELLER_MODEL = "Qwen/Qwen2-7B-Instruct"
+LABELLER_MODEL = "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"  # "Qwen/Qwen2-7B-Instruct"
 # "Qwen/Qwen2-0.5B-Instruct"
 # "stabilityai/stablelm-2-zephyr-1_6b"
 # "microsoft/phi-1_5"
@@ -125,6 +125,7 @@ results_dict = {
     'duration': data_generator.labelling_duration,
     'n_gpus_available': data_generator.n_gpus_available,
     'gpu_type': data_generator.gpu_type,
+    'run_configuration': data_generator.labelling_config,
 }
 
 with open(data_path, 'w') as file:
