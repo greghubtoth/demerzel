@@ -1032,7 +1032,7 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
     cot_with_insights_and_examples_chain = chain_dict | prompt_template
     requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=requested_cols, data_split='train'
+        data=dataset, requested_cols=requested_cols,  # data_split='train', called with subset of data.
     )
     rationale_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
