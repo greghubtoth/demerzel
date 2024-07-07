@@ -181,13 +181,7 @@ def generate_ai_labels_for_data(
     target_words = target_words if target_words is not None else ["1", "2"]
     summary_predictions = [[] for _ in target_words]
     # Process in batches
-    for i in tqdm(
-        range(
-            0,
-            len(dataset_to_label["train"][prompt_col]),
-            batch_size,
-        )
-    ):
+    for i in tqdm(range(0, len(dataset_to_label["train"][prompt_col]), batch_size,)):
         batch_prompts = dataset_to_label["train"][prompt_col][i : i + batch_size]
         input_ids = tokeniser(
             batch_prompts,
@@ -428,7 +422,7 @@ def dataset_dict_to_langchain_batch_consumable(
 def cot_prompt_decoder(tokeniser, model_outputs):
     decoded_completions = [
         # QWEN2 specific changes
-        prompt[:-len('<|im_end|>')] + ENDING_LEE_ET_AL
+        prompt[: -len('<|im_end|>')] + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
     return decoded_completions

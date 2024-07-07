@@ -13,8 +13,10 @@ from nyx.constants import COMMON_OUTPUT_PATHS, PROMPTS_COL, RM_TRAIN_DATA_PATH
 from nyx.data_generation.blue_prints import (AbstractDataGenerator,
                                              ModelAndTokeniserInConfig)
 from nyx.data_generation.utils import (
-    generate_cot_for_prompts_with_gpus, generate_insights_successful,
-    generate_insights_with_comparisons, generate_next_token_probabilities_gpus,
+    generate_cot_for_prompts_with_gpus,
+    generate_cot_with_insights_and_examples_prompts_with_gpus,
+    generate_insights_successful, generate_insights_with_comparisons,
+    generate_next_token_probabilities_gpus,
     generate_reflexion_and_cot_completions_with_gpus,
     generate_unbiased_ai_preference_distribution, get_documents_from_data,
     get_mean_of_probabilities, prompt_generator_Lee_et_al)
@@ -34,7 +36,6 @@ class BaselineLeeEtAlConfigValidator(ModelAndTokeniserInConfig):
     "use BaselineLeeEtAlDataGeneratorWithLangChain.",
 )
 class BaselineLeeEtAlDataGenerator(AbstractDataGenerator):
-
     def __init__(self, config: Dict[str, Any]):
         """
         Notes
@@ -127,7 +128,7 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
             decoded_reasoning=cot_generations,
             batch_size=self.batch_size,
             distributed_state=self.distributed_state,
-            dtype=self.precision,
+            # dtype=self.precision,
             target_words=target_words,
         )
         return cot_generations, predictions
@@ -188,7 +189,6 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
 
 
 class BaselineLeeEtAlDataGeneratorWithLangChain(CotGeneratorWithGpus):
-
     def __init__(self, config: Dict[str, Any]):
         """
         Notes
@@ -244,16 +244,18 @@ class BaselineLeeEtAlDataGeneratorWithLangChain(CotGeneratorWithGpus):
         #                                                                                    dtype=self.precision,
         #                                                                                    target_words=target_words)
 
-        ordered_reasoning, predictions_with_both_ordered_combinations[0] = (
-            self.generate_cot_with_gpus(
-                dataset=self.dataset, reverse=False, target_words=target_words
-            )
+        (
+            ordered_reasoning,
+            predictions_with_both_ordered_combinations[0],
+        ) = self.generate_cot_with_gpus(
+            dataset=self.dataset, reverse=False, target_words=target_words
         )
 
-        reversed_reasoning, predictions_with_both_ordered_combinations[1] = (
-            self.generate_cot_with_gpus(
-                dataset=self.dataset, reverse=True, target_words=target_words
-            )
+        (
+            reversed_reasoning,
+            predictions_with_both_ordered_combinations[1],
+        ) = self.generate_cot_with_gpus(
+            dataset=self.dataset, reverse=True, target_words=target_words
         )
 
         ai_choice_list = get_mean_of_probabilities(
@@ -284,11 +286,15 @@ class ExpelAdaptationConfigValidator(ModelAndTokeniserInConfig):
     # langchain_batch_size
     target_words: Optional[List[str]] = None
     prompt_col: Optional[str] = PROMPTS_COL
+    ### Below params are for ablation experiments.
     # Shinn et al. when n_retries >= 1 then Reflexion is generated.
     n_retries: Optional[int] = 1
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
     insights_step_size: Optional[int] = None
+    # The below parameter turns off insights when set to -1.
+    insights_early_stopping: Optional[int] = -1
     # Li et al. Negative examples are saved and can be retrieved for prompts.
+    utilise_examples: Optional[bool] = True
     negative_examples: Optional[bool] = False
     embedding_model_name: Optional[str] = "sentence-transformers/all-mpnet-base-v2"
     vdb_search_type: Optional[str] = "similarity"
@@ -296,7 +302,6 @@ class ExpelAdaptationConfigValidator(ModelAndTokeniserInConfig):
 
 
 class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
-
     def __init__(self, config: Dict[str, Any]):
         """
         Notes
@@ -310,6 +315,11 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.validate_config()
         super().__init__(self.config)
         self.n_gpus_available = torch.cuda.device_count()
+        self.insights_step_size = (
+            self.insights_step_size
+            if self.insights_step_size is not None
+            else self.n_gpus_available * self.batch_size * 20
+        )
         print(f"Number of GPUs detected as available is: {self.n_gpus_available}.")
 
     def set_up_vector_db(self):
@@ -321,9 +331,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             encode_kwargs=encode_kwargs,
             # force_download=True,
         )
-        client = weaviate.Client(
-            embedded_options=weaviate.embedded.EmbeddedOptions(),
-        )
+        client = weaviate.Client(embedded_options=weaviate.embedded.EmbeddedOptions(),)
         self.vectorstore = Weaviate.from_documents(
             # Documents will be added later, as examples and insights are accumulated.
             [],
@@ -370,33 +378,33 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             ):
                 predictions_with_both_ordered_combinations = {}
                 if nth_retry == 0:
-                    # Need to split here if Insights and or examples exist.
-                    ordered_reasoning, predictions_with_both_ordered_combinations[0] = (
-                        self.generate_cot_with_gpus(
-                            dataset=dataset_within_step_size,
-                            reverse=False,
-                            target_words=target_words,
-                        )
+                    (
+                        ordered_reasoning,
+                        predictions_with_both_ordered_combinations[0],
+                    ) = self.generate_cot_with_1_shot_and_insights_with_gpus(
+                        dataset=dataset_within_step_size,
+                        reverse=False,
+                        target_words=target_words,
                     )
 
                     (
                         reversed_reasoning,
                         predictions_with_both_ordered_combinations[1],
-                    ) = self.generate_cot_with_gpus(
+                    ) = self.generate_cot_with_1_shot_and_insights_with_gpus(
                         dataset=dataset_within_step_size,
                         reverse=True,
                         target_words=target_words,
                     )
 
                 elif nth_retry >= 1:
-
-                    # Need to add requested columns in here, to use both ordered_prompt and reversed_prompt!
-                    ordered_reasoning, predictions_with_both_ordered_combinations[0] = (
-                        self.generate_reflexion_and_cot_with_gpus(
-                            dataset=dataset_within_step_size,
-                            reverse=False,
-                            target_words=target_words,
-                        )
+                    # Above prompt is re-used and appended to.
+                    (
+                        ordered_reasoning,
+                        predictions_with_both_ordered_combinations[0],
+                    ) = self.generate_reflexion_and_cot_with_gpus(
+                        dataset=dataset_within_step_size,
+                        reverse=False,
+                        target_words=target_words,
                     )
 
                     (
@@ -448,8 +456,11 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             successful_attempts = insight_generation_step_dataset.filter(
                 lambda example: example["incorrect_prediction"].startswith("False")
             )
-            self.generate_insights(successful_attempts_dataset=successful_attempts)
-            self.add_examples_to_vector_db(dataset=insight_generation_step_dataset)
+            if self.insights_early_stopping >= j:
+                self.generate_insights(successful_attempts_dataset=successful_attempts)
+
+            if self.utilise_examples is True:
+                self.add_examples_to_vector_db(dataset=insight_generation_step_dataset)
 
         end = time.time()
         self.duration = round(end - start, 2)
@@ -495,9 +506,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         if self.negative_examples is True:
             negative_docs = get_documents_from_data(
-                failed_attempts,
-                negative_examples=True,
-                reverse=reverse,
+                failed_attempts, negative_examples=True, reverse=reverse,
             )
             negative_ids = self.example_retriever.add_documents(documents=negative_docs)
             doc_ids_added.extend(negative_ids)
@@ -514,6 +523,40 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             docs_to_remove = self.doc_ids[:n_docs_added]
             self.doc_ids = self.doc_ids[n_docs_added:]
             self.vectorstore.delete(docs_to_remove)
+
+    def generate_cot_with_1_shot_and_insights_with_gpus(
+        self,
+        dataset: DatasetDict,
+        reverse: bool = False,
+        target_words: List[str] = None,
+    ) -> Tuple[List[str], List[List[float]]]:
+        target_words = target_words if target_words is not None else ["1", "2"]
+        insights_and_cot_example_kwargs = {}
+        if len(self.insights) >= 1:
+            insights_and_cot_example_kwargs["insights"] = self.insights
+        if len(self.doc_ids) >= 1:
+            insights_and_cot_example_kwargs["vdb_retriever"] = self.example_retriever
+
+        cot_generations = generate_cot_with_insights_and_examples_prompts_with_gpus(
+            dataset=dataset,
+            labeller_model=self.labeller_model,
+            tokeniser=self.tokeniser,
+            distributed_state=self.distributed_state,
+            batch_size=self.batch_size,
+            max_new_tokens=self.max_new_tokens,
+            reverse=reverse,
+            **insights_and_cot_example_kwargs,
+        )
+        predictions = generate_next_token_probabilities_gpus(
+            model=self.labeller_model,
+            tokeniser=self.tokeniser,
+            decoded_reasoning=cot_generations,
+            batch_size=self.batch_size,
+            distributed_state=self.distributed_state,
+            # dtype=self.precision,
+            target_words=target_words,
+        )
+        return cot_generations, predictions
 
     def generate_reflexion_and_cot_with_gpus(
         self,
@@ -545,7 +588,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             decoded_reasoning=cot_generations,
             batch_size=self.batch_size,
             distributed_state=self.distributed_state,
-            dtype=self.precision,
+            # dtype=self.precision,
             target_words=target_words,
         )
         return cot_generations, predictions

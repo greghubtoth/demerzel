@@ -27,7 +27,8 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import BASELINE_LEE_ET_AL, ADAPTED_EXPEL_ET_AL
+from nyx.data_generation.settings import (ADAPTED_EXPEL_ET_AL,
+                                          BASELINE_LEE_ET_AL)
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
