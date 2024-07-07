@@ -27,7 +27,7 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import BASELINE_LEE_ET_AL
+from nyx.data_generation.settings import BASELINE_LEE_ET_AL, ADAPTED_EXPEL_ET_AL
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
@@ -35,9 +35,9 @@ from nyx.data_loaders import HumanEvaluatedDataLoader
 
 RANDOM_SEED = 42
 # PRECISION = torch.float32
-PRECISION_NAME = 'float16'
+PRECISION_NAME = 'auto'
 DEVICE = "cuda"
-LABELLER_MODEL = "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"  # "Qwen/Qwen2-7B-Instruct"
+LABELLER_MODEL = "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"  # "Qwen/Qwen2-7B-Instruct"  # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-0.5B-Instruct"
 # "stabilityai/stablelm-2-zephyr-1_6b"
 # "microsoft/phi-1_5"
@@ -54,7 +54,7 @@ print(f'Employing model: {LABELLER_MODEL} on device: {DEVICE}.')
 print(f'RUN_ID: {RUN_ID}')
 # In[ ]:
 
-
+# BASELINE_LEE_ET_AL
 config = {
     'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
     'precision_name': PRECISION_NAME,
@@ -65,9 +65,27 @@ config = {
     'max_new_tokens': 512,
 }
 
+# ADAPTED_EXPEL_ET_AL
+# config = {
+#     'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
+#     'precision_name': PRECISION_NAME,
+#     'device': DEVICE,
+#     # 'dataset': data,
+#     'batch_size': 2,
+#     'run_id': RUN_ID,
+#     'max_new_tokens': 512,
+#     "n_retries": 1,
+#     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
+#     "insights_step_size": 10,
+#     # Li et al. Negative examples are saved and can be retrieved for prompts.
+#     "negative_examples:": False,
+#     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
+#     "vdb_search_type": "similarity",
+#     "max_vdb_documents": 5_000,
+# }
 
 data_generator = Controller(
-    labelling_method=BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
+    labelling_method=BASELINE_LEE_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # Tóth et al., (Ablation)
     labelling_config=config,
     data_loader=HumanEvaluatedDataLoader,
 )
