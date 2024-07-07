@@ -13,7 +13,7 @@ from nyx.constants import (CANDIDATE_COL, CHOICE_COL, COMPARISON_DATA_PATH,
                            TEXT_COL)
 
 
-def precision_enumerator(requested_precision: str) -> torch.dtype:
+def precision_enumerator(requested_precision: str) -> torch.dtype or str:
     """Enumerator to overcome torch precision serialisation issue.
     Google whether this can be replaced by a torch enum.
     """
@@ -25,6 +25,8 @@ def precision_enumerator(requested_precision: str) -> torch.dtype:
         return torch.bfloat16
     elif requested_precision == 'int8':
         return torch.int8
+    elif requested_precision == 'auto':
+        return 'auto'
     else:
         raise NotImplementedError(
             'Precision enumerator only supports float32, float16, bfloat16 and int8.'
