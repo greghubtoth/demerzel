@@ -366,6 +366,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         # TBD with semantic embeddings chain
 
         for j in range(0, len(self.dataset['train']), self.insights_step_size):
+            n_insights = self.insights.split('\n')
+            self.distributed_state.print(f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}')
             nth_retry = 0
             dataset_within_step_size = self.dataset['train'].select(
                 range(

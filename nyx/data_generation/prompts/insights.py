@@ -1,6 +1,7 @@
 # References
 # ----------
 # https://github.com/LeapLabTHU/ExpeL/blob/f05f5304b5a11dcbee36ad9be9245f6bf673a4d5/prompts/templates/human.py#L21
+from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN, BOS_ASSISTANT_TOKEN
 
 FORMAT_RULES_OPERATION_TEMPLATE = """<OPERATION> <RULE NUMBER>: <RULE>
 
@@ -11,18 +12,16 @@ REMOVE <EXISTING RULE NUMBER>: <EXISTING RULE>
 EDIT <EXISTING RULE NUMBER>: <NEW MODIFIED RULE>
 ADD <NEW RULE NUMBER>: <NEW RULE>
 
-Do not mention the trials in the rules because all the rules should be GENERALLY APPLICABLE. Each rule should be concise and easy to follow. Any operation can be used MULTIPLE times. Do at most 4 operations and each existing rule can only get a maximum of 1 operation. 
+Do not mention the trials in the rules because all the rules should be GENERALLY APPLICABLE. Each rule should be concise and easy to follow. Any operation can be used MULTIPLE times. Do at most 4 operations and each existing rule can only get a maximum of 1 operation.
 """
 
 CRITIQUE_SUMMARY_SUFFIX = dict(
-    full="""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES. Below are the operations you do to the above list of EXISTING RULES:
-""",
-    not_full="""Below are the operations you do to the above list of EXISTING RULES:
-""",
+    full=f"""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES.{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the operations you do to the above list of EXISTING RULES:\n""",
+    not_full=f"""{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the operations you do to the above list of EXISTING RULES:\n""",
 )
 
 ALL_SUCCESSES_INSIGHTS_TEMPLATE = (
-    """You will be given successful reasoning attempts for selecting the best of 2 summaries for reddit posts.  
+    BOS_USER_TOKEN + """\nYou will be given successful reasoning attempts for selecting the best of 2 summaries for reddit posts.  
 Here are the trials:
 {success_history}
 
@@ -37,7 +36,7 @@ By examining the successful attempts, and the list of existing rules, you can pe
 )
 
 FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE = (
-    """You will be given a successful and an unsuccessful reasoning attempts for selecting the best of 2 summaries for reddit posts.
+    BOS_USER_TOKEN + """\nYou will be given a successful and an unsuccessful reasoning attempts for selecting the best of 2 summaries for reddit posts.
 Here are the two previous trials to compare and critique:
 TRIAL TASK:
 {task}

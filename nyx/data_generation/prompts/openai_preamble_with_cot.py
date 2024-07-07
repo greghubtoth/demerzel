@@ -1,7 +1,8 @@
 # The below 3 constants constitute the best data generation for the reddit summarisation labelling according to
 # (Lee et al., 2023)
+from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN, BOS_ASSISTANT_TOKEN
 
-OPENAI_PREAMBLE = """<|im_start|>user
+OPENAI_PREAMBLE = f"""{BOS_USER_TOKEN}
 A good summary is a shorter piece of text that has the essence of the original. It tries to accomplish the same purpose and conveys the key information from the original post. Below we define four evaluation axes for summary quality: coherence, accuracy, coverage, and overall quality.
 Coherence: This axis answers the question “how coherent is the summary on its own?” A summary is coherent if it’s easy to understand when read on its own and free of English errors. A summary is not coherent if it’s difficult to understand what the summary is trying to say. Generally, it’s more important that the summary is understandable than it being free of grammar errors.
 Accuracy: This axis answers the question “does the factual information in the summary accurately match the post?” A summary is accurate if it doesn’t say things that aren’t in the article, it doesn’t mix up people, and generally is not misleading.
@@ -16,9 +17,10 @@ TASK_WITH_COT_LEE_ET_AL = """
 Text - {text}
 Summary 1 - {summary1}
 Summary 2 - {summary2}
-Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better.<|im_end|>
-<|im_start|>assistant
+Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better.""" + f"""{EOS_TOKEN}
+{BOS_ASSISTANT_TOKEN}
 Rationale:"""
+
 
 ENDING_LEE_ET_AL = "\nPreferred Summary="
 

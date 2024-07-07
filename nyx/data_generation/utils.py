@@ -421,8 +421,8 @@ def dataset_dict_to_langchain_batch_consumable(
 
 def cot_prompt_decoder(tokeniser, model_outputs):
     decoded_completions = [
-        # QWEN2 specific changes
-        prompt[: -len('<|im_end|>')] + ENDING_LEE_ET_AL
+        # tokeniser specific changes
+        prompt[: -len(tokeniser.eos_token)] + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
     return decoded_completions
@@ -447,8 +447,9 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
     decoded_completions = [
         f"""{prompt.split('You were unsuccessful in rating')[0]}
-Observation: {prompt.split('You were unsuccessful in rating')[1].split('Observation:')[1]}"""
-        for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=True)
+Observation: {prompt.split('You were unsuccessful in rating')[1].split('Observation:')[1][: -len(tokeniser.eos_token)]}"""
+        # tokeniser specific changes
+        for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
     return decoded_completions
 
@@ -597,7 +598,7 @@ def generate_reflexion_and_cot_completions_with_gpus(
     """
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
     batch_size = batch_size * 2
-    template = "{cot_prompt}{predicted_summary}\n" f"{SUMMARISATION_REFLEXION_PROMPT}"
+    template = "{cot_prompt}{predicted_summary}" + f"{tokeniser.eos_token}\n{SUMMARISATION_REFLEXION_PROMPT}"
     prompt_template = PromptTemplate.from_template(template)
 
     # This chain only assembles the prompts
