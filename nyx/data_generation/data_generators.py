@@ -321,6 +321,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             else self.n_gpus_available * self.batch_size * 20
         )
         print(f"Number of GPUs detected as available is: {self.n_gpus_available}.")
+        if self.utilise_examples is True:
+            self.set_up_vector_db()
 
     def set_up_vector_db(self):
         model_kwargs = {'device': self.device}
