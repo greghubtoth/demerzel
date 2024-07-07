@@ -598,7 +598,10 @@ def generate_reflexion_and_cot_completions_with_gpus(
     """
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
     batch_size = batch_size * 2
-    template = "{cot_prompt}{predicted_summary}" + f"{tokeniser.eos_token}\n{SUMMARISATION_REFLEXION_PROMPT}"
+    template = (
+        "{cot_prompt}{predicted_summary}"
+        + f"{tokeniser.eos_token}\n{SUMMARISATION_REFLEXION_PROMPT}"
+    )
     prompt_template = PromptTemplate.from_template(template)
 
     # This chain only assembles the prompts
@@ -1032,7 +1035,8 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
     cot_with_insights_and_examples_chain = chain_dict | prompt_template
     requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=requested_cols,  # data_split='train', called with subset of data.
+        data=dataset,
+        requested_cols=requested_cols,  # data_split='train', called with subset of data.
     )
     rationale_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,

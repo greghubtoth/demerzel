@@ -327,31 +327,16 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
     def set_up_vector_db(self):
         model_kwargs = {'device': self.device}
         encode_kwargs = {'normalize_embeddings': False}
-        embeddings = HuggingFaceEmbeddings(
+        self.embeddings = HuggingFaceEmbeddings(
             model_name=self.embedding_model_name,
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs,
             # force_download=True,
         )
-        client = weaviate.Client(embedded_options=weaviate.embedded.EmbeddedOptions(),)
-        self.vectorstore = Weaviate.from_documents(
-            # Documents will be added later, as examples and insights are accumulated.
-            [],
-            embeddings,
-            weaviate_url="http://127.0.0.1:8079",
+        self.client = weaviate.Client(
+            embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
 
-        self.example_retriever = self.vectorstore.as_retriever(
-            search_type=self.vdb_search_type,
-            search_kwargs={
-                "k": 1,
-                "where_filter": {
-                    "path": ["type"],
-                    "operator": "Equal",
-                    "valueString": "example",
-                },
-            },
-        )
         # self.insight_retriever = vectorstore.as_retriever(
         #     search_type=self.vdb_search_type,
         #     search_kwargs={
@@ -369,7 +354,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         for j in range(0, len(self.dataset['train']), self.insights_step_size):
             n_insights = self.insights.split('\n')
-            self.distributed_state.print(f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}')
+            self.distributed_state.print(
+                f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}'
+            )
             nth_retry = 0
             dataset_within_step_size = self.dataset['train'].select(
                 range(
@@ -501,6 +488,25 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         )
 
     def add_examples_to_vector_db(self, dataset: DatasetDict, reverse: bool = False):
+        if len(self.doc_ids) == 0:
+            self.vectorstore = Weaviate.from_documents(
+                # Documents will be added later, as examples and insights are accumulated.
+                [],
+                self.embeddings,
+                weaviate_url="http://127.0.0.1:8079",
+            )
+
+            self.example_retriever = self.vectorstore.as_retriever(
+                search_type=self.vdb_search_type,
+                search_kwargs={
+                    "k": 1,
+                    "where_filter": {
+                        "path": ["type"],
+                        "operator": "Equal",
+                        "valueString": "example",
+                    },
+                },
+            )
         doc_ids_added = []
         successful_attempts = dataset.filter(
             lambda example: example["incorrect_prediction"].startswith("False")

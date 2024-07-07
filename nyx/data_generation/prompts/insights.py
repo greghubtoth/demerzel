@@ -1,7 +1,8 @@
 # References
 # ----------
 # https://github.com/LeapLabTHU/ExpeL/blob/f05f5304b5a11dcbee36ad9be9245f6bf673a4d5/prompts/templates/human.py#L21
-from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN, BOS_ASSISTANT_TOKEN
+from nyx.data_generation.prompts.model_specific_tokens import (
+    BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
 
 FORMAT_RULES_OPERATION_TEMPLATE = """<OPERATION> <RULE NUMBER>: <RULE>
 
@@ -21,7 +22,8 @@ CRITIQUE_SUMMARY_SUFFIX = dict(
 )
 
 ALL_SUCCESSES_INSIGHTS_TEMPLATE = (
-    BOS_USER_TOKEN + """\nYou will be given successful reasoning attempts for selecting the best of 2 summaries for reddit posts.  
+    BOS_USER_TOKEN
+    + """\nYou will be given successful reasoning attempts for selecting the best of 2 summaries for reddit posts.  
 Here are the trials:
 {success_history}
 
@@ -36,7 +38,8 @@ By examining the successful attempts, and the list of existing rules, you can pe
 )
 
 FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE = (
-    BOS_USER_TOKEN + """\nYou will be given a successful and an unsuccessful reasoning attempts for selecting the best of 2 summaries for reddit posts.
+    BOS_USER_TOKEN
+    + """\nYou will be given a successful and an unsuccessful reasoning attempts for selecting the best of 2 summaries for reddit posts.
 Here are the two previous trials to compare and critique:
 TRIAL TASK:
 {task}

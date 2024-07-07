@@ -1,6 +1,7 @@
 # The below 3 constants constitute the best data generation for the reddit summarisation labelling according to
 # (Lee et al., 2023)
-from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN, BOS_ASSISTANT_TOKEN
+from nyx.data_generation.prompts.model_specific_tokens import (
+    BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
 
 OPENAI_PREAMBLE = f"""{BOS_USER_TOKEN}
 A good summary is a shorter piece of text that has the essence of the original. It tries to accomplish the same purpose and conveys the key information from the original post. Below we define four evaluation axes for summary quality: coherence, accuracy, coverage, and overall quality.
@@ -13,13 +14,16 @@ You are an expert summary rater. Given a piece of text and two of its possible s
 INSIGHTS = "\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
-TASK_WITH_COT_LEE_ET_AL = """
+TASK_WITH_COT_LEE_ET_AL = (
+    """
 Text - {text}
 Summary 1 - {summary1}
 Summary 2 - {summary2}
-Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better.""" + f"""{EOS_TOKEN}
+Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."""
+    + f"""{EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
 Rationale:"""
+)
 
 
 ENDING_LEE_ET_AL = "\nPreferred Summary="

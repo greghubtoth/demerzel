@@ -2,7 +2,8 @@
 # References
 # ----------
 # https://github.com/LeapLabTHU/ExpeL
-from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN, BOS_ASSISTANT_TOKEN
+from nyx.data_generation.prompts.model_specific_tokens import (
+    BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
 
 SYSTEM_REFLECTION_INSTRUCTION = """You will be given a previous reasoning trial in which you were given access to a 
 Docstore API environment and a question to answer. You were unsuccessful in answering the question either because you
