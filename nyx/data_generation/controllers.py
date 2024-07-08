@@ -4,7 +4,7 @@ from typing import Callable
 
 from nyx.data_generation.blue_prints import AbstractController
 from nyx.data_generation.evaluators import AILabelEvaluator
-from nyx.data_generation.settings import LABELLING_CLASSES
+from nyx.data_generation.settings import ADAPTED_EXPEL_ET_AL, LABELLING_CLASSES
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 
@@ -40,6 +40,9 @@ class Controller(AbstractController):
         self.labelling_duration = labeller_instance.duration
         self.n_gpus_available = labeller_instance.n_gpus_available
         self.gpu_type = labeller_instance.gpu_type
+
+        if self.labelling_method == ADAPTED_EXPEL_ET_AL:
+            self.labelling_config['insights'] = labeller_instance.insights
         return self.labelled_data
 
     def report_on_performance(self):

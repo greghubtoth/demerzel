@@ -439,25 +439,37 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
                 nth_retry += 1
             # At the end of the while loop, append the negative data too.
-            insight_generation_step_dataset = concatenate_datasets(
-                [insight_generation_step_dataset, dataset_within_step_size]
-            )
+            # insight_generation_step_dataset = concatenate_datasets(
+            #     [insight_generation_step_dataset, dataset_within_step_size]
+            # )
             comparison_train_dataset = concatenate_datasets(
-                [insight_generation_step_dataset, dataset_within_step_size]
+                [
+                    comparison_train_dataset,
+                    insight_generation_step_dataset,
+                    dataset_within_step_size,
+                ]
             )
 
-            successful_attempts = insight_generation_step_dataset.filter(
-                lambda example: example["incorrect_prediction"].startswith("False")
-            )
-            if self.insights_early_stopping >= j:
-                self.generate_insights(successful_attempts_dataset=successful_attempts)
+            # successful_attempts = insight_generation_step_dataset.filter(
+            #     lambda example: example["incorrect_prediction"].startswith("False")
+            # )
+
+            # If current dataset <= early_stop_condition then generate insights.
+            if j <= self.insights_early_stopping:
+                self.generate_insights(
+                    successful_attempts_dataset=insight_generation_step_dataset
+                )
 
             if self.utilise_examples is True:
-                self.add_examples_to_vector_db(dataset=insight_generation_step_dataset)
+                self.add_examples_to_vector_db(
+                    dataset=concatenate_datasets(
+                        [insight_generation_step_dataset, dataset_within_step_size]
+                    )
+                )
 
         end = time.time()
         self.duration = round(end - start, 2)
-
+        self.distributed_state.print(f'INSIGHTS:\n{self.insights}')
         print(f"Labelling all data twice took {self.duration} seconds to execute.")
 
         return self.save_rm_training_data(comparison_train_dataset)
@@ -508,6 +520,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 },
             },
         )
+
     def add_examples_to_vector_db(self, dataset: DatasetDict, reverse: bool = False):
         doc_ids_added = []
 
@@ -520,12 +533,16 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         if self.negative_examples is True:
             negative_docs = get_documents_from_data(
-                failed_attempts, negative_examples=True, reverse=reverse,
+                failed_attempts,
+                negative_examples=True,
+                reverse=reverse,
             )
             if len(self.doc_ids) == 0:
                 self.set_up_retriever(documents=negative_docs)
             else:
-                negative_ids = self.example_retriever.add_documents(documents=negative_docs)
+                negative_ids = self.example_retriever.add_documents(
+                    documents=negative_docs
+                )
                 doc_ids_added.extend(negative_ids)
 
         positive_docs = get_documents_from_data(
@@ -536,7 +553,6 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         else:
             positive_ids = self.example_retriever.add_documents(documents=positive_docs)
             doc_ids_added.extend(positive_ids)
-
 
         self.doc_ids.extend(doc_ids_added)
         if len(self.doc_ids) > self.max_vdb_documents:

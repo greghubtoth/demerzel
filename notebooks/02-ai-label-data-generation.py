@@ -138,6 +138,8 @@ if not os.path.exists(METRICS_PATH):
 
 data_path = f'{METRICS_PATH}/data-generation-info.json'
 
+drop_info = ['dataset', 'run_id', 'llm_model_name', 'precision_name']
+
 results_dict = {
     'run_id': RUN_ID,
     'labeller_model': LABELLER_MODEL,
@@ -145,7 +147,12 @@ results_dict = {
     'duration': data_generator.labelling_duration,
     'n_gpus_available': data_generator.n_gpus_available,
     'gpu_type': data_generator.gpu_type,
-    'run_configuration': data_generator.labelling_config,
+    'method': data_generator.labelling_method,
+    'run_configuration': {
+        key: value
+        for key, value in data_generator.labelling_config.items
+        if key not in drop_info
+    },
 }
 
 with open(data_path, 'w') as file:

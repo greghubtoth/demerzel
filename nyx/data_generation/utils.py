@@ -1,6 +1,6 @@
 from enum import Enum
 from operator import itemgetter
-from typing import Callable, Dict, List
+from typing import Dict, List
 
 import datasets
 import torch
@@ -20,6 +20,7 @@ from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
+from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
     COT_EXAMPLE, INSIGHTS, RETRIEVED_EXAMPLE_TEMPLATE)
 from nyx.data_generation.prompts.reflection import \
@@ -181,7 +182,13 @@ def generate_ai_labels_for_data(
     target_words = target_words if target_words is not None else ["1", "2"]
     summary_predictions = [[] for _ in target_words]
     # Process in batches
-    for i in tqdm(range(0, len(dataset_to_label["train"][prompt_col]), batch_size,)):
+    for i in tqdm(
+        range(
+            0,
+            len(dataset_to_label["train"][prompt_col]),
+            batch_size,
+        )
+    ):
         batch_prompts = dataset_to_label["train"][prompt_col][i : i + batch_size]
         input_ids = tokeniser(
             batch_prompts,
@@ -327,10 +334,10 @@ def calculate_target_token_probabilities_with_gpus(
             # Move the batch to the device
             single_batch = single_batch.to(distributed_state.device)
             prediction_params = (
-                dict(input_ids=single_batch.input_ids)
+                single_batch
                 if 'causal' in original_model.config.architectures[0].lower()
                 else dict(
-                    input_ids=single_batch.input_ids,
+                    **single_batch,
                     decoder_input_ids=original_model._shift_right(
                         single_batch.input_ids
                     ),
@@ -360,10 +367,10 @@ def calculate_target_token_probabilities_with_gpus(
 
     collected_predictions_1 = gather_object(predictions_target_1)
     collected_predictions_2 = gather_object(predictions_target_2)
-    distributed_state.print(
-        f'length of encoded_texts: {len(encoded_text)}, collected_predictions_1:'
-        f' {len(collected_predictions_1)} collected_predictions_2: {len(collected_predictions_2)}'
-    )
+    # distributed_state.print(
+    #     f'length of encoded_texts: {len(encoded_text)}, collected_predictions_1:'
+    #     f' {len(collected_predictions_1)} collected_predictions_2: {len(collected_predictions_2)}'
+    # )
 
     return [collected_predictions_1, collected_predictions_2]
 
@@ -422,7 +429,8 @@ def dataset_dict_to_langchain_batch_consumable(
 def cot_prompt_decoder(tokeniser, model_outputs):
     decoded_completions = [
         # tokeniser specific changes
-        prompt[: -len(tokeniser.eos_token)] + ENDING_LEE_ET_AL
+        prompt[: -len(tokeniser.eos_token)].replace(tokeniser.pad_token, '')
+        + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
     return decoded_completions
@@ -445,24 +453,19 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     - Preferred Summary = <right answer>
     """
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
+    split_string = f'{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
     decoded_completions = [
-        f"""{prompt.split('You were unsuccessful in rating')[0]}
-Observation: {prompt.split('You were unsuccessful in rating')[1].split('Observation:')[1][: -len(tokeniser.eos_token)]}"""
+        f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
+Observation: {prompt.split(split_string)[1].split('Observation:')[1][: -len(tokeniser.eos_token)]}"""
         # tokeniser specific changes
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
     return decoded_completions
 
 
-def insights_prompt_decoder(tokeniser, model_outputs):
-    # apply
-    pass
-
-
 class DecoderSelector(Enum):
     CoT = cot_prompt_decoder
     Reflexion = reflexion_prompt_decoder
-    Insights = insights_prompt_decoder
 
 
 def generate_tokens_with_gpus(
@@ -496,7 +499,7 @@ def generate_tokens_with_gpus(
     completions_per_process = []
     generation_config = (
         GenerationConfig(
-            max_new_tokens=max_new_tokens, pad_token_id=tokeniser.eos_token_id
+            max_new_tokens=max_new_tokens, pad_token_id=tokeniser.pad_token
         )
         if 'causal' in labeller_model.config.architectures[0].lower()
         else GenerationConfig(max_new_tokens=max_new_tokens)
@@ -509,7 +512,6 @@ def generate_tokens_with_gpus(
             single_batch = single_batch.to(distributed_state.device)
 
             labeller_outputs = labeller_model.generate(
-                # input_ids=single_batch.input_ids,
                 **single_batch,
                 generation_config=generation_config,
             )
@@ -677,7 +679,7 @@ def generate_next_token_probabilities_gpus(
     ]
 
     # Re-order the split-between processes here!
-    print('Probabilities being calculated.')
+    distributed_state.print('Probabilities being calculated.')
     probabilities = calculate_target_token_probabilities_with_gpus(
         original_model=model,
         tokeniser=tokeniser,
@@ -689,9 +691,9 @@ def generate_next_token_probabilities_gpus(
 
     collected_distinct_predictions_1 = probabilities[0][: len(decoded_reasoning)]
     collected_distinct_predictions_2 = probabilities[1][: len(decoded_reasoning)]
-    # distributed_state.print(f'length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: '
-    #                         f'{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: '
-    #                         f'{len(collected_distinct_predictions_2)}.')
+    distributed_state.print(f'length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: '
+                            f'{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: '
+                            f'{len(collected_distinct_predictions_2)}.')
     return [collected_distinct_predictions_1, collected_distinct_predictions_2]
 
 
@@ -818,15 +820,15 @@ def generate_insights_successful(
 
         tokenised_prompts = tokeniser(
             prompts_to_complete, padding=True, return_tensors="pt"
-        ).input_ids.to(torch.device(distributed_state.device))
+        ).to(torch.device(distributed_state.device))
 
         with torch.no_grad():
             labeller_outputs = labeller_model.generate(
-                input_ids=tokenised_prompts,
+                **tokenised_prompts,
                 generation_config=(
                     GenerationConfig(
                         max_new_tokens=max_new_tokens,
-                        pad_token_id=tokeniser.eos_token_id,
+                        pad_token_id=tokeniser.pad_token,
                     )
                     if 'causal' in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
@@ -918,15 +920,15 @@ def generate_insights_with_comparisons(
 
         tokenised_prompts = tokeniser(
             prompts_to_complete, padding=True, return_tensors="pt"
-        ).input_ids.to(torch.device(distributed_state.device))
+        ).to(torch.device(distributed_state.device))
 
         with torch.no_grad():
             labeller_outputs = labeller_model.generate(
-                input_ids=tokenised_prompts,
+                **tokenised_prompts,
                 generation_config=(
                     GenerationConfig(
                         max_new_tokens=max_new_tokens,
-                        pad_token_id=tokeniser.eos_token_id,
+                        pad_token_id=tokeniser.pad_token,
                     )
                     if 'causal' in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
