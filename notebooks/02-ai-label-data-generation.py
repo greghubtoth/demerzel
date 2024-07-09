@@ -88,7 +88,7 @@ config = {
 }
 
 data_generator = Controller(
-    labelling_method=BASELINE_LEE_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
+    labelling_method=ADAPTED_EXPEL_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
     labelling_config=config,
     data_loader=HumanEvaluatedDataLoader,
 )
