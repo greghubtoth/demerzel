@@ -453,7 +453,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     - Preferred Summary = <right answer>
     """
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
-    split_string = f'{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
+    split_string = f'{tokeniser.eos_token}\n{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
 Observation: {prompt.split(split_string)[1].split('Observation:')[1][: -len(tokeniser.eos_token)]}"""
