@@ -79,7 +79,7 @@ config = {
     'max_new_tokens': 512,
     "n_retries": 1,
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-    "insights_step_size": 10,
+    "insights_step_size": 4,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "negative_examples:": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
@@ -99,7 +99,7 @@ if TESTING is True:
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
     ].select(
-        range((100))
+        range((12))
     )  # .select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"

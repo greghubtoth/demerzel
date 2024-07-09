@@ -752,9 +752,11 @@ def parse_insights_to_dict(insights: str) -> Dict[str, str]:
 
 
 def update_insights(insight_actions: List[str], insights: str) -> str:
+    print(f'insight_actions: {insight_actions}')
     correctly_parsed_insight_actions = parse_insights_actions(
         completion=insight_actions[0]
     )
+    print(f'correctly_parsed_insight_actions: {correctly_parsed_insight_actions}')
     insights_dict = parse_insights_to_dict(insights) if len(insights) >= 1 else {}
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
