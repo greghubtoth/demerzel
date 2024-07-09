@@ -205,7 +205,7 @@ def generate_ai_labels_for_data(
                 generation_config=(
                     GenerationConfig(
                         max_new_tokens=max_new_tokens,
-                        pad_token_id=tokeniser.eos_token_id,
+                        pad_token_id=tokeniser.pad_token_id,
                     )
                     if 'causal' in original_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
@@ -499,7 +499,7 @@ def generate_tokens_with_gpus(
     completions_per_process = []
     generation_config = (
         GenerationConfig(
-            max_new_tokens=max_new_tokens, pad_token_id=tokeniser.pad_token
+            max_new_tokens=max_new_tokens, pad_token_id=tokeniser.pad_token_id
         )
         if 'causal' in labeller_model.config.architectures[0].lower()
         else GenerationConfig(max_new_tokens=max_new_tokens)
@@ -830,7 +830,7 @@ def generate_insights_successful(
                 generation_config=(
                     GenerationConfig(
                         max_new_tokens=max_new_tokens,
-                        pad_token_id=tokeniser.pad_token,
+                        pad_token_id=tokeniser.pad_token_id,
                     )
                     if 'causal' in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
@@ -930,7 +930,7 @@ def generate_insights_with_comparisons(
                 generation_config=(
                     GenerationConfig(
                         max_new_tokens=max_new_tokens,
-                        pad_token_id=tokeniser.pad_token,
+                        pad_token_id=tokeniser.pad_token_id,
                     )
                     if 'causal' in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
