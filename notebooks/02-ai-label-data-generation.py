@@ -94,13 +94,14 @@ data_generator = Controller(
 )
 
 if TESTING is True:
-    # indices = random.sample(range(0, 92859), 100)
+    indices = random.sample(range(0, 92859), 20)
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(
-        range((12))
-    )  # .select(indices)
+    # ].select(
+    #     range((12))
+    # )
+    ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"
     ].select(range(50))
@@ -150,7 +151,7 @@ results_dict = {
     'method': data_generator.labelling_method,
     'run_configuration': {
         key: value
-        for key, value in data_generator.labelling_config.items
+        for key, value in data_generator.labelling_config.items()
         if key not in drop_info
     },
 }
