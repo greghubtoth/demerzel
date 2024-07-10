@@ -36,11 +36,12 @@ from nyx.data_loaders import HumanEvaluatedDataLoader
 
 RANDOM_SEED = 42
 # PRECISION = torch.float32
-PRECISION_NAME = 'float16'  # f16 for qwen models.
+PRECISION_NAME = 'auto'  # f16 for qwen models.
 DEVICE = "cuda"
-LABELLER_MODEL = "Qwen/Qwen2-7B-Instruct"
+LABELLER_MODEL = "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
+# "Qwen/Qwen2-7B-Instruct"
 # "Qwen/Qwen2-0.5B-Instruct"
 # "stabilityai/stablelm-2-zephyr-1_6b"
 # "microsoft/phi-1_5"
@@ -63,7 +64,7 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 2,
+    'batch_size': 10,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
 }
@@ -94,7 +95,7 @@ data_generator = Controller(
 )
 
 if TESTING is True:
-    indices = random.sample(range(0, 92859), 200)
+    indices = random.sample(range(0, 92859), 50)
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
