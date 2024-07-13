@@ -51,7 +51,7 @@ LABELLER_MODEL = "google/gemma-2-9b-it"
 # "google/flan-t5-xl"
 # "bigscience/mt0-small"
 # "bigscience/mt0-large"
-# "google/gemma-2-9b-it"   # batch_size =3
+# "google/gemma-2-9b-it"   # batch_size = 2
 
 
 RUN_ID = uuid.uuid4().hex  # "test-multi-gpu-set-up"  #
@@ -98,7 +98,7 @@ data_generator = Controller(
 
 if TESTING is True:
     # clean up <|end|> in Gemma and other CoT bits and or others, split them and replace.
-    indices = random.sample(range(0, 92859), 50)
+    indices = random.sample(range(0, 92859), 20)
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
