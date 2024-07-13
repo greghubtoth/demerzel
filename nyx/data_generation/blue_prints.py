@@ -62,7 +62,7 @@ class AbstractDataGenerator(ABC):
 
         if multi_gpu_setup is True:
             self.distributed_state = PartialState()
-        access_token = "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"
+        access_token = os.environ.get('HF_TOKEN')
         try:
             self.labeller_model = (
                 AutoModelForCausalLM.from_pretrained(
