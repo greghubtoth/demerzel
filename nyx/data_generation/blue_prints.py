@@ -100,7 +100,7 @@ class AbstractDataGenerator(ABC):
         # to get the right logits for probability computations.
         self.padding = 'left'
         self.tokeniser = AutoTokenizer.from_pretrained(
-            self.tokeniser_name, padding_side=self.padding
+            self.tokeniser_name, padding_side=self.padding, token=access_token
         )
         self.tokeniser.pad_token = (
             self.tokeniser.pad_token
