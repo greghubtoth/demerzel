@@ -38,7 +38,7 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = 'float16'  # f16 for qwen models.
 DEVICE = "cuda"
-LABELLER_MODEL = "microsoft/Phi-3-medium-4k-instruct"
+LABELLER_MODEL = "google/gemma-2-9b-it"  # "microsoft/Phi-3-medium-4k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-7B-Instruct"
@@ -50,8 +50,9 @@ LABELLER_MODEL = "microsoft/Phi-3-medium-4k-instruct"
 # "google/flan-t5-xl"
 # "bigscience/mt0-small"
 # "bigscience/mt0-large"
-#
-GEMMA_PATH = "/Users/owner/Documents/AI_MSc/13.Dissertation/experiments/labelling-model/gemma-2b-it/"
+# "google/gemma-2-9b-it"
+
+
 RUN_ID = uuid.uuid4().hex  # "test-multi-gpu-set-up"  #
 TESTING = True
 print(f'Employing model: {LABELLER_MODEL} on device: {DEVICE}.')

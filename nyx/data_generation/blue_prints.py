@@ -62,17 +62,18 @@ class AbstractDataGenerator(ABC):
 
         if multi_gpu_setup is True:
             self.distributed_state = PartialState()
-
+        access_token = "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"
         try:
             self.labeller_model = (
                 AutoModelForCausalLM.from_pretrained(
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     device_map=self.distributed_state.device,
+                    token=access_token
                 )
                 if self.multi_gpu_setup is True
                 else AutoModelForCausalLM.from_pretrained(
-                    self.llm_model_name, torch_dtype=self.precision
+                    self.llm_model_name, torch_dtype=self.precision, token=access_token
                 ).to(torch.device(self.device))
             )
 
@@ -82,10 +83,11 @@ class AbstractDataGenerator(ABC):
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     device_map=self.distributed_state.device,
+                    token=access_token,
                 )
                 if self.multi_gpu_setup is True
                 else AutoModelForSeq2SeqLM.from_pretrained(
-                    self.llm_model_name, torch_dtype=self.precision
+                    self.llm_model_name, torch_dtype=self.precision, token=access_token
                 ).to(torch.device(self.device))
             )
 
