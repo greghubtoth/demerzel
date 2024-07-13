@@ -36,7 +36,7 @@ from nyx.data_loaders import HumanEvaluatedDataLoader
 
 RANDOM_SEED = 42
 # PRECISION = torch.float32
-PRECISION_NAME = 'bfloat16'  # f16 for qwen and phi models.
+PRECISION_NAME = 'float16'  # f16 for qwen and phi models.
 DEVICE = "cuda"
 LABELLER_MODEL = "google/gemma-2-9b-it"  # "microsoft/Phi-3-medium-4k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
