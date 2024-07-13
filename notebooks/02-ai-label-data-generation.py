@@ -66,7 +66,7 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 3,
+    'batch_size': 2,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
 }
