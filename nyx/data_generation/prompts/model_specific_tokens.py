@@ -8,6 +8,6 @@ PHI_BOS_USER = '<|user|>'
 PHI_BOS_ASSISTANT = '<|assistant|>'
 
 # The generations will use the below suggested tokens, can be set to '' to disable, e.g. for mt0 models.
-EOS_TOKEN = QWEN_EOS
-BOS_USER_TOKEN = QWEN_BOS_USER
-BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT
+EOS_TOKEN = PHI_EOS
+BOS_USER_TOKEN = PHI_BOS_USER
+BOS_ASSISTANT_TOKEN = PHI_BOS_ASSISTANT
