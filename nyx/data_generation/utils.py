@@ -547,7 +547,7 @@ def generate_cot_for_prompts_with_gpus(
     ----------
     https://github.com/huggingface/accelerate/blob/main/examples/inference/distributed/phi2.py
     """
-    batch_size = batch_size * 2
+    # batch_size = batch_size * 2
     template = OPENAI_PREAMBLE + TASK_WITH_COT_LEE_ET_AL
     prompt_template = PromptTemplate.from_template(template)
 
