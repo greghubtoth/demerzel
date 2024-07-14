@@ -68,7 +68,7 @@ config = {
     # 'dataset': data,
     'batch_size': 4,
     'run_id': RUN_ID,
-    'max_new_tokens': 512,
+    'max_new_tokens': 800,
 }
 
 ### ADAPTED_EXPEL_ET_AL
