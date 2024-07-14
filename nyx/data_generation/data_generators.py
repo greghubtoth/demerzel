@@ -119,7 +119,7 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
             labeller_model=self.labeller_model,
             tokeniser=self.tokeniser,
             distributed_state=self.distributed_state,
-            batch_size=3 * self.batch_size,
+            batch_size=int(3.75 * self.batch_size),
             max_new_tokens=self.max_new_tokens,
             reverse=reverse,
         )
