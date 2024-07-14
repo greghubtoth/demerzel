@@ -98,14 +98,14 @@ data_generator = Controller(
 
 if TESTING is True:
     # clean up <|end|> in Gemma and other CoT bits and or others, split them and replace.
-    indices = random.sample(range(0, 92859), 48)
+    # indices = random.sample(range(0, 92859), 48)
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    # ].select(
-    #     range((12))
-    # )
-    ].select(indices)
+    ].select(
+        range((96))
+    )
+    # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"
     ].select(range(50))
