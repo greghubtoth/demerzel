@@ -215,36 +215,6 @@ class BaselineLeeEtAlDataGeneratorWithLangChain(CotGeneratorWithGpus):
         target_words = ["1", "2"]
         predictions_with_both_ordered_combinations = {}
 
-        # ordered_reasoning = generate_cot_for_prompts_with_gpus(dataset=self.dataset,
-        #                                                        labeller_model=self.labeller_model,
-        #                                                        tokeniser=self.tokeniser,
-        #                                                        distributed_state=self.distributed_state,
-        #                                                        batch_size=self.batch_size,
-        #                                                        max_new_tokens=self.max_new_tokens,
-        #                                                        reverse=False)
-        # predictions_with_both_ordered_combinations[0] = generate_ai_label_predictions_gpus(model=self.labeller_model,
-        #                                                                                    tokeniser=self.tokeniser,
-        #                                                                                    decoded_reasoning=ordered_reasoning,
-        #                                                                                    batch_size=self.batch_size,
-        #                                                                                    distributed_state=self.distributed_state,
-        #                                                                                    dtype=self.precision,
-        #                                                                                    target_words=target_words)
-
-        # reversed_reasoning = generate_cot_for_prompts_with_gpus(dataset=self.dataset,
-        #                                                         labeller_model=self.labeller_model,
-        #                                                         tokeniser=self.tokeniser,
-        #                                                         distributed_state=self.distributed_state,
-        #                                                         batch_size=self.batch_size,
-        #                                                         max_new_tokens=self.max_new_tokens,
-        #                                                         reverse=True)
-        # predictions_with_both_ordered_combinations[1] = generate_ai_label_predictions_gpus(model=self.labeller_model,
-        #                                                                                    tokeniser=self.tokeniser,
-        #                                                                                    decoded_reasoning=reversed_reasoning,
-        #                                                                                    batch_size=self.batch_size,
-        #                                                                                    distributed_state=self.distributed_state,
-        #                                                                                    dtype=self.precision,
-        #                                                                                    target_words=target_words)
-
         (
             ordered_reasoning,
             predictions_with_both_ordered_combinations[0],
