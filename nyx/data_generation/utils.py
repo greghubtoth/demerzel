@@ -507,7 +507,7 @@ def generate_tokens_with_gpus(
     with distributed_state.split_between_processes(
         encoded_batches, apply_padding=True
     ) as batched_data:
-        for single_batch in batched_data:
+        for single_batch in tqdm(batched_data):
             # Move the batch to the device
             single_batch = single_batch.to(distributed_state.device)
 
