@@ -103,7 +103,7 @@ if TESTING is True:
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
     ].select(
-        range(10_000)
+        range(2_500)
     )
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
