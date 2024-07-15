@@ -66,7 +66,7 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 4,
+    'batch_size': 10,
     'run_id': RUN_ID,
     'max_new_tokens': 800,
 }
@@ -103,7 +103,7 @@ if TESTING is True:
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
     ].select(
-        range(10_000)
+        range(100)
     )
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
