@@ -163,10 +163,10 @@ def tokenize_function(example):
     prompt = [start_prompt + post + end_prompt for post in example["post"]]
     example['check'] = prompt
     example["input_ids"] = tokenizer(
-        prompt, padding=True, return_tensors="pt"  # padding="max_length", truncation=True
+        prompt, padding="max_length", truncation=True, return_tensors="pt"  # padding=True
     ).input_ids.to(torch.device(DEVICE))
     example["labels"] = tokenizer(
-        example["summary"], padding=True, return_tensors="pt"  # padding="max_length", truncation=True
+        example["summary"], padding="max_length", truncation=True, return_tensors="pt"  # padding=True
     ).input_ids.to(torch.device(DEVICE))
 
     return example
