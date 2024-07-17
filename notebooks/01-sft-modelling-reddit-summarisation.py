@@ -141,7 +141,7 @@ dataset
 
 if TESTING is True:
     dataset["train"] = dataset["train"].select(range(100))
-    dataset["test"] = dataset["test"].select(range(50))
+    dataset["test"] = dataset["test"].select(range(100))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
     #     lambda example, index: index % 4680 == 0, with_indices=True
@@ -203,7 +203,7 @@ print(tokenized_datasets)
 
 # Checking for layers to apply LoRA. Selecting the query and value layers are the most
 # basic implementation according to the paper. They are refered to as q and v here.
-print(original_model)
+# print(original_model)
 
 
 # In[34]:
@@ -286,9 +286,17 @@ tokenizer.save_pretrained(SFT_PEFT_ADAPTER_PATH)
 # adapter_checkpoint_path = f"/Users/gtoth/PycharmProjects/LLM-jupyter-notebooks/openai-subreddit-data-flan-t5-large/peft-dialogue-summary-checkpoint-local-6k"
 
 # adapter_checkpoint_path = f"{common_folder_path}/peft-dialogue-summary-checkpoint-local"
-trained_model = AutoModelForSeq2SeqLM.from_pretrained(
-    CHOSEN_MODEL, torch_dtype=PRECISION
-)
+# trained_model = AutoModelForSeq2SeqLM.from_pretrained(
+#     CHOSEN_MODEL, torch_dtype=PRECISION
+# )
+try:
+    trained_model = AutoModelForSeq2SeqLM.from_pretrained(
+        CHOSEN_MODEL, torch_dtype=PRECISION
+    )
+except ValueError:
+    trained_model = AutoModelForCausalLM.from_pretrained(
+        CHOSEN_MODEL, torch_dtype=PRECISION
+    )
 
 peft_checkpoint_model = PeftModel.from_pretrained(trained_model, SFT_PEFT_ADAPTER_PATH)
 
