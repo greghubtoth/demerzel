@@ -314,7 +314,7 @@ baseline_model_generation = quantitative_comparison(
     batch_size=EVALUATION_BATCH_SIZE,
     device=DEVICE,
 )
-peft_checkpoint_model = PeftModel.from_pretrained(original_model, SFT_PEFT_ADAPTER_PATH)
+# peft_checkpoint_model = PeftModel.from_pretrained(original_model, SFT_PEFT_ADAPTER_PATH)
 
 peft_config = PeftConfig.from_pretrained(SFT_PEFT_ADAPTER_PATH)
 # to initiate with random weights
