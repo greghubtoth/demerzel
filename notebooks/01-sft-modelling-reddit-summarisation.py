@@ -108,11 +108,12 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
+
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
     )
 
 tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, padding_side="left")  # model_max_length=512
