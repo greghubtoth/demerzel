@@ -34,7 +34,7 @@ import pandas as pd
 
 TRAIN_BATCH_SIZE = 10
 EVALUATION_BATCH_SIZE = 4
-LEARNING_RATE = 1.41e-5 # 1e-3
+LEARNING_RATE = 1.41e-5  # 1e-3
 LORA_PARAM_R = 8
 LORA_PARAM_ALPHA = 16
 LORA_PARAM_TARGET_MODULES = {
@@ -126,7 +126,7 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(106 * 10))
+    dataset["train"] = dataset["train"].select(range(100))
     dataset["test"] = dataset["test"].select(range(100))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
