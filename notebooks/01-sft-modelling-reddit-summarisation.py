@@ -2,6 +2,18 @@
 # coding: utf-8
 import json
 import os
+import time
+import uuid
+
+import evaluate
+import numpy as np
+import torch
+from datasets import load_from_disk
+from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
+from tqdm import tqdm
+from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+                          AutoTokenizer, Trainer, TrainingArguments)
+
 # In[1]:
 
 
@@ -13,30 +25,14 @@ import os
 # In[24]:
 
 
-import time
-import uuid
 
-import evaluate
-import numpy as np
 
-from tqdm import tqdm
-from datasets import load_from_disk
-from transformers import (
-    AutoModelForSeq2SeqLM,
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    Trainer,
-    TrainingArguments,
-)
-from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
-import torch
 
 tqdm.pandas()
 
 from pathlib import Path
 
 import pandas as pd
-
 
 TRAIN_BATCH_SIZE = 2
 EVALUATION_BATCH_SIZE = 4
@@ -67,23 +63,13 @@ print(f"Model: {CHOSEN_MODEL} will be trained on device: {DEVICE}.")
 # In[25]:
 
 
-from nyx.utils import (
-    precision_enumerator,
-    download_and_save_reddit_data,
-    round_dictionary_values,
-    get_task_type,
-    print_number_of_trainable_model_parameters,
-)
-
-from nyx.constants import (
-    SFT_DATA_OUTPUT_PATH,
-    COMMON_OUTPUT_PATHS,
-    SFT_OUTPUT_DIR,
-    SFT_PEFT_MERGED_MODEL_PATH,
-    SFT_PEFT_ADAPTER_PATH,
-    METRICS_PATH,
-)
-
+from nyx.constants import (COMMON_OUTPUT_PATHS, METRICS_PATH,
+                           SFT_DATA_OUTPUT_PATH, SFT_OUTPUT_DIR,
+                           SFT_PEFT_ADAPTER_PATH, SFT_PEFT_MERGED_MODEL_PATH)
+from nyx.utils import (download_and_save_reddit_data, get_task_type,
+                       precision_enumerator,
+                       print_number_of_trainable_model_parameters,
+                       round_dictionary_values)
 
 COMMON_OUTPUT_PATHS = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
 METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=COMMON_OUTPUT_PATHS)
@@ -109,14 +95,15 @@ PRECISION
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
         CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
-
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
         CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
     )
 
-tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, padding_side="left")  # model_max_length=512
+tokenizer = AutoTokenizer.from_pretrained(
+    CHOSEN_MODEL, padding_side="left"
+)  # model_max_length=512
 
 
 original_model.to(torch.device(DEVICE))
@@ -164,10 +151,16 @@ def tokenize_function(example):
     prompt = [start_prompt + post + end_prompt for post in example["post"]]
     example['check'] = prompt
     example["input_ids"] = tokenizer(
-        prompt, padding="max_length", truncation=True, return_tensors="pt"  # padding=True
+        prompt,
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",  # padding=True
     ).input_ids.to(torch.device(DEVICE))
     example["labels"] = tokenizer(
-        example["summary"], padding="max_length", truncation=True, return_tensors="pt"  # padding=True
+        example["summary"],
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",  # padding=True
     ).input_ids.to(torch.device(DEVICE))
 
     return example
@@ -319,7 +312,6 @@ trained_model.to(torch.device(DEVICE))
 
 from nyx.evaluation import quantitative_comparison
 
-
 # In[20]:
 
 
@@ -350,7 +342,7 @@ print(
     f"Evaluating N={N_EVAL_SAMPLES} samples took {round(duration, 2)} seconds to execute."
 )
 
-human_baseline_answer = dataset["test"][0: N_EVAL_SAMPLES]["summary"]
+human_baseline_answer = dataset["test"][0:N_EVAL_SAMPLES]["summary"]
 
 zipped_summaries = list(
     zip(human_baseline_answer, peft_checkpoint_generation, baseline_model_generation)

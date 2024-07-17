@@ -453,7 +453,9 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     - Preferred Summary = <right answer>
     """
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
-    split_string = f'{tokeniser.eos_token}\n{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
+    split_string = (
+        f'{tokeniser.eos_token}\n{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
+    )
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
 Observation: {prompt.split(split_string)[1].split('Observation:')[1][: -len(tokeniser.eos_token)]}"""
@@ -691,9 +693,11 @@ def generate_next_token_probabilities_gpus(
 
     collected_distinct_predictions_1 = probabilities[0][: len(decoded_reasoning)]
     collected_distinct_predictions_2 = probabilities[1][: len(decoded_reasoning)]
-    distributed_state.print(f'length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: '
-                            f'{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: '
-                            f'{len(collected_distinct_predictions_2)}.')
+    distributed_state.print(
+        f'length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: '
+        f'{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: '
+        f'{len(collected_distinct_predictions_2)}.'
+    )
     return [collected_distinct_predictions_1, collected_distinct_predictions_2]
 
 

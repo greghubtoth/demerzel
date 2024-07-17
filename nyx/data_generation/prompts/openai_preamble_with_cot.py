@@ -20,7 +20,7 @@ INSIGHTS = "\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
 TASK_WITH_COT_LEE_ET_AL = (
-        """\nText - {text}
+    """\nText - {text}
 Summary 1 - {summary1}
 Summary 2 - {summary2}
 
