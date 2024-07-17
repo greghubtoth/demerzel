@@ -41,8 +41,8 @@ import pandas as pd
 TRAIN_BATCH_SIZE = 106
 EVALUATION_BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
-LORA_PARAM_R = 24
-LORA_PARAM_ALPHA = 48
+LORA_PARAM_R = 8
+LORA_PARAM_ALPHA = 16
 LORA_PARAM_TARGET_MODULES = {
     "bigscience/mt0-small": ["q", "v"],
     "microsoft/phi-1_5": ["q_proj", "v_proj"],
