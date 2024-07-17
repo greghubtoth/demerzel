@@ -38,7 +38,7 @@ from pathlib import Path
 import pandas as pd
 
 
-TRAIN_BATCH_SIZE = 2
+TRAIN_BATCH_SIZE = 106
 EVALUATION_BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
 LORA_PARAM_R = 24
@@ -140,7 +140,7 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(100))
+    dataset["train"] = dataset["train"].select(range(106 * 10))
     dataset["test"] = dataset["test"].select(range(100))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
