@@ -13,6 +13,7 @@ from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
                           AutoTokenizer, Trainer, TrainingArguments)
+from nyx.evaluation import quantitative_comparison
 
 # In[1]:
 
@@ -280,23 +281,14 @@ tokenizer.save_pretrained(SFT_PEFT_ADAPTER_PATH)
 # trained_model = AutoModelForSeq2SeqLM.from_pretrained(
 #     CHOSEN_MODEL, torch_dtype=PRECISION
 # )
-try:
-    trained_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION
-    )
-except ValueError:
-    trained_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION
-    )
-
-peft_checkpoint_model = PeftModel.from_pretrained(trained_model, SFT_PEFT_ADAPTER_PATH)
-
-peft_config = PeftConfig.from_pretrained(SFT_PEFT_ADAPTER_PATH)
-# to initiate with random weights
-peft_config.init_lora_weights = False
-trained_model.add_adapter(peft_config)
-trained_model.enable_adapters()
-trained_model.to(torch.device(DEVICE))
+# try:
+#     trained_model = AutoModelForSeq2SeqLM.from_pretrained(
+#         CHOSEN_MODEL, torch_dtype=PRECISION
+#     )
+# except ValueError:
+#     trained_model = AutoModelForCausalLM.from_pretrained(
+#         CHOSEN_MODEL, torch_dtype=PRECISION
+#     )
 # print("ok")
 
 
@@ -307,24 +299,32 @@ trained_model.to(torch.device(DEVICE))
 
 # %timeit quantitative_comparison(peft_model)
 
-from nyx.evaluation import quantitative_comparison
-
 # In[20]:
 
 
 N_EVAL_SAMPLES = int(len(tokenized_datasets['test']) * 0.15)
 
 start = time.time()
-peft_checkpoint_generation = quantitative_comparison(
-    trained_model,
+
+baseline_model_generation = quantitative_comparison(
+    original_model,
     dataset,
     tokenizer,
     n_samples_to_evaluate=N_EVAL_SAMPLES,
     batch_size=EVALUATION_BATCH_SIZE,
     device=DEVICE,
 )
-baseline_model_generation = quantitative_comparison(
-    original_model,
+peft_checkpoint_model = PeftModel.from_pretrained(original_model, SFT_PEFT_ADAPTER_PATH)
+
+peft_config = PeftConfig.from_pretrained(SFT_PEFT_ADAPTER_PATH)
+# to initiate with random weights
+peft_config.init_lora_weights = False
+original_model.add_adapter(peft_config)
+original_model.enable_adapters()
+original_model.to(torch.device(DEVICE))
+
+peft_checkpoint_generation = quantitative_comparison(
+    original_model,  # peft enabled model
     dataset,
     tokenizer,
     n_samples_to_evaluate=N_EVAL_SAMPLES,
@@ -402,8 +402,22 @@ if not os.path.exists(METRICS_PATH):
 data_path = f'{METRICS_PATH}/sft-results.json'
 
 results_dict = {
-    'baseline-model': original_model_results,
-    'sft-model': peft_model_results,
+    'rouge-metric-baseline-model': original_model_results,
+    'rouge-metric-sft-model': peft_model_results,
+    'train_batch_size': TRAIN_BATCH_SIZE,
+    'evaluation_batch_size': EVALUATION_BATCH_SIZE,
+    'learning_rate': LEARNING_RATE,
+    'lora_param_r': LORA_PARAM_R,
+    'lora_param_alpha': LORA_PARAM_ALPHA,
+    'lora_param_target_modules': LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL],
+    'precision': PRECISION_NAME,
+    'device': DEVICE,
+    'chosen_model': CHOSEN_MODEL,
+    'testing': TESTING,
+    'run_id': RUN_ID,
+    'gpu_type': torch.cuda.get_device_name(),
+
+
 }
 with open(data_path, 'w') as file:
     json.dump(results_dict, file)
