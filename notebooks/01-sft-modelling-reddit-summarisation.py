@@ -9,7 +9,7 @@ import evaluate
 import numpy as np
 import torch
 from datasets import load_from_disk
-from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
+from peft import LoraConfig, PeftConfig, get_peft_model
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
                           AutoTokenizer, Trainer, TrainingArguments)
@@ -44,7 +44,7 @@ LORA_PARAM_TARGET_MODULES = {
     "microsoft/Phi-3-medium-4k-instruct": ["qkv_proj"],
 }
 # PRECISION = torch.float32
-PRECISION_NAME = 'float16'
+PRECISION_NAME = 'bfloat16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
 CHOSEN_MODEL = "microsoft/Phi-3-mini-4k-instruct"  # "bigscience/mt0-small" #"google/flan-t5-large"
 TESTING = True
@@ -92,11 +92,11 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto", # , attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # , attn_implementation="flash_attention_2"
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto", # , attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # , attn_implementation="flash_attention_2"
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
