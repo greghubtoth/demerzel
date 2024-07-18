@@ -37,7 +37,7 @@ DEVICE = "cuda"
 CHOSEN_MODEL = "microsoft/phi-1_5"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
-RUN_ID = uuid.uuid4().hex  # '316a2787976e4e848ea635422e2ef684'
+RUN_ID = "1ef0d64c95414628b7ddb35eb3bac2fe"  # uuid.uuid4().hex  # '316a2787976e4e848ea635422e2ef684'
 
 LORA_PARAM_TARGET_MODULES = {
     "bigscience/mt0-small": ["q", "v"],
