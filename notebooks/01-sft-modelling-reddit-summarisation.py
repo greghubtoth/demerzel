@@ -47,7 +47,7 @@ LORA_PARAM_TARGET_MODULES = {
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
 CHOSEN_MODEL = "microsoft/phi-1_5"  # "bigscience/mt0-small" #"google/flan-t5-large"
-TESTING = True
+TESTING = False
 RUN_ID = uuid.uuid4().hex
 print(RUN_ID)
 
@@ -240,7 +240,7 @@ peft_training_args = TrainingArguments(
     gradient_accumulation_steps=2,  # Accumulate gradients over 2 steps
     # fp16=True,  # Enable mixed precision
     # num_train_epochs=3,
-    save_steps=5_000,
+    save_steps=10_000,
     logging_steps=1,
     max_steps=len(tokenized_datasets["train"])
     // TRAIN_BATCH_SIZE,  # number of training data * 2, i.e. go over all data-summary pairs twice.
@@ -268,6 +268,7 @@ duration = end - start
 print(f"Training for 1 epoch took {round(duration, 2)} seconds to execute.")
 
 peft_trainer.model.save_pretrained(SFT_PEFT_ADAPTER_PATH)
+print(f'Peft adapter was saved to:\n{SFT_PEFT_ADAPTER_PATH}')
 tokenizer.save_pretrained(SFT_PEFT_ADAPTER_PATH)
 
 
