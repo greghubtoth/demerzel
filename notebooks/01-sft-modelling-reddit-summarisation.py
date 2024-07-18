@@ -92,11 +92,11 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map=DEVICE,
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map=DEVICE,
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
@@ -153,13 +153,13 @@ def tokenize_function(example):
         padding="max_length",
         truncation=True,
         return_tensors="pt",  # padding=True
-    ).input_ids.to(torch.device(DEVICE))
+    ).input_ids  # .to(torch.device(DEVICE))
     example["labels"] = tokenizer(
         example["summary"],
         padding="max_length",
         truncation=True,
         return_tensors="pt",  # padding=True
-    ).input_ids.to(torch.device(DEVICE))
+    ).input_ids  # .to(torch.device(DEVICE))
 
     return example
 
@@ -245,9 +245,9 @@ peft_training_args = TrainingArguments(
 )
 
 peft_trainer = Trainer(
-    model=peft_model.to(
-        torch.device(DEVICE)
-    ),  # Important to train on Mac Chip GPU equivalent
+    model=peft_model,  # Important to train on Mac Chip GPU equivalent # .to(
+    #     torch.device(DEVICE)
+    # )
     args=peft_training_args,
     train_dataset=tokenized_datasets["train"],
 )
@@ -321,7 +321,7 @@ peft_config = PeftConfig.from_pretrained(SFT_PEFT_ADAPTER_PATH)
 peft_config.init_lora_weights = False
 original_model.add_adapter(peft_config)
 original_model.enable_adapters()
-original_model.to(torch.device(DEVICE))
+original_model  # .to(torch.device(DEVICE))
 
 peft_checkpoint_generation = quantitative_comparison(
     original_model,  # peft enabled model
