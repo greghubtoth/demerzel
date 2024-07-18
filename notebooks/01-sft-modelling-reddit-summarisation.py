@@ -104,8 +104,8 @@ tokenizer = AutoTokenizer.from_pretrained(
 )  # model_max_length=512
 
 
-original_model.to(torch.device(DEVICE))
-print("Push models and data to GPU for efficiency.")
+# original_model.to(torch.device(DEVICE))
+# print("Push models and data to GPU for efficiency.")
 
 print(print_number_of_trainable_model_parameters(original_model))
 
