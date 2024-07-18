@@ -46,7 +46,7 @@ LORA_PARAM_TARGET_MODULES = {
 # PRECISION = torch.float32
 PRECISION_NAME = 'bfloat16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
-CHOSEN_MODEL = "microsoft/Phi-3-mini-4k-instruct"  # "microsoft/phi-1_5" "bigscience/mt0-small" "google/flan-t5-large"
+CHOSEN_MODEL = "microsoft/phi-1_5"  # "microsoft/Phi-3-mini-4k-instruct" "bigscience/mt0-small" "google/flan-t5-large"
 TESTING = True
 RUN_ID = uuid.uuid4().hex
 print(RUN_ID)
@@ -92,11 +92,11 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # attn_implementation="flash_attention_2",
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  #  attn_implementation="flash_attention_2",
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  #  attn_implementation="flash_attention_2"
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
