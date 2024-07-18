@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pandas as pd
 
-TRAIN_BATCH_SIZE = 2
+TRAIN_BATCH_SIZE = 1
 EVALUATION_BATCH_SIZE = 4
 LEARNING_RATE = 1.41e-11  # 1e-3
 LORA_PARAM_R = 32
