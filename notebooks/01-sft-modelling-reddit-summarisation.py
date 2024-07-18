@@ -44,7 +44,7 @@ LORA_PARAM_TARGET_MODULES = {
     "microsoft/Phi-3-medium-4k-instruct": ["qkv_proj"],
 }
 # PRECISION = torch.float32
-PRECISION_NAME = 'bfloat16'
+PRECISION_NAME = 'float16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
 CHOSEN_MODEL = "microsoft/Phi-3-mini-4k-instruct"  # "bigscience/mt0-small" #"google/flan-t5-large"
 TESTING = True
