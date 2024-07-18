@@ -92,11 +92,11 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto", attn_implementation="flash_attention_2",
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # attn_implementation="flash_attention_2",
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto", attn_implementation="flash_attention_2"
+        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  # attn_implementation="flash_attention_2"
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
