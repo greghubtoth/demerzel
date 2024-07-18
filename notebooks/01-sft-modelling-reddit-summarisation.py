@@ -264,7 +264,7 @@ peft_trainer.train()
 end = time.time()
 
 duration = end - start
-print(end)
+# print(end)
 print(f"Training for 1 epoch took {round(duration, 2)} seconds to execute.")
 
 peft_trainer.model.save_pretrained(SFT_PEFT_ADAPTER_PATH)
@@ -443,8 +443,8 @@ for key, value in zip(peft_model_results.keys(), improvement):
 # In[30]:
 
 
-model = peft_model.merge_and_unload()
-model.save_pretrained(SFT_PEFT_MERGED_MODEL_PATH)
+# model = peft_model.merge_and_unload()
+peft_model.save_pretrained(SFT_PEFT_MERGED_MODEL_PATH)
 
 
 # # END
