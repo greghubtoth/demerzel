@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pandas as pd
 
-TRAIN_BATCH_SIZE = 4
+TRAIN_BATCH_SIZE = 2
 EVALUATION_BATCH_SIZE = 4
 LEARNING_RATE = 1.41e-5  # 1e-3
 LORA_PARAM_R = 8
@@ -92,11 +92,11 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map=DEVICE,
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map="auto",
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map=DEVICE,
+        CHOSEN_MODEL, torch_dtype=PRECISION, attn_implementation="flash_attention_2", device_map="auto",
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
