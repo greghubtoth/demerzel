@@ -34,7 +34,7 @@ import pandas as pd
 
 TRAIN_BATCH_SIZE = 5
 EVALUATION_BATCH_SIZE = 4
-LEARNING_RATE = 1.41e-5  # 1e-3
+LEARNING_RATE = 1.41e-7  # 1e-3
 LORA_PARAM_R = 16
 LORA_PARAM_ALPHA = 32
 LORA_PARAM_TARGET_MODULES = {
@@ -47,7 +47,7 @@ LORA_PARAM_TARGET_MODULES = {
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
 CHOSEN_MODEL = "microsoft/phi-1_5"  # "bigscience/mt0-small" #"google/flan-t5-large"
-TESTING = False
+TESTING = True
 RUN_ID = uuid.uuid4().hex
 print(RUN_ID)
 
@@ -126,8 +126,8 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(100))
-    dataset["test"] = dataset["test"].select(range(200))
+    dataset["train"] = dataset["train"].select(range(200))
+    dataset["test"] = dataset["test"].select(range(100))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
     #     lambda example, index: index % 4680 == 0, with_indices=True
