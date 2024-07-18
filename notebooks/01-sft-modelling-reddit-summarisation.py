@@ -126,7 +126,7 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(1_000))
+    dataset["train"] = dataset["train"].select(range(100))
     dataset["test"] = dataset["test"].select(range(200))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
