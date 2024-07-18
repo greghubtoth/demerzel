@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pandas as pd
 
-TRAIN_BATCH_SIZE = 4
+TRAIN_BATCH_SIZE = 8
 EVALUATION_BATCH_SIZE = 4
 LEARNING_RATE = 1.41e-5  # 1e-3
 LORA_PARAM_R = 8
@@ -46,7 +46,7 @@ LORA_PARAM_TARGET_MODULES = {
 # PRECISION = torch.float32
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
-CHOSEN_MODEL = "microsoft/Phi-3-medium-4k-instruct"  # "bigscience/mt0-small" #"google/flan-t5-large"
+CHOSEN_MODEL = "microsoft/Phi-3-mini-4k-instruct"  # "bigscience/mt0-small" #"google/flan-t5-large"
 TESTING = True
 RUN_ID = uuid.uuid4().hex
 print(RUN_ID)
