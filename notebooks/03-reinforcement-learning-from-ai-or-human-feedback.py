@@ -253,7 +253,7 @@ def tokenize_function(example):
 
 
 reward_modelling_train_dataset = comparison_train_dataset.map(
-    tokenize_function, #batched=True
+    tokenize_function, batched=True
 )
 reward_modelling_train_dataset = reward_modelling_train_dataset.remove_columns(
     [
