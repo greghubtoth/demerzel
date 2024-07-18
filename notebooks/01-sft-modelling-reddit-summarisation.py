@@ -127,7 +127,7 @@ dataset
 
 if TESTING is True:
     dataset["train"] = dataset["train"].select(range(1_000))
-    dataset["test"] = dataset["test"].select(range(1_500))
+    dataset["test"] = dataset["test"].select(range(200))
     dataset["validation"] = dataset["validation"].select(range(50))
     # dataset = dataset.filter(
     #     lambda example, index: index % 4680 == 0, with_indices=True
