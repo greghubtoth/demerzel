@@ -134,6 +134,9 @@ if TESTING is True:
     comparison_dataset = comparison_dataset.filter(
         lambda example, index: index % 4680 == 0, with_indices=True
     )
+    comparison_train_dataset = comparison_train_dataset.filter(
+        lambda example, index: index % 100 == 0, with_indices=True
+    )
 print(comparison_dataset)
 
 
@@ -244,8 +247,8 @@ def tokenize_function(example):
         return_tensors="pt",
     )  # .input_ids.to(torch.device(DEVICE))
 
-    if 'causal' in sft_model.config.architectures[0].lower():
-        example["decoder_input_ids"] = sft_model._shift_right(example["labels"])
+    # if 'causal' in sft_model.config.architectures[0].lower():
+    #     example["decoder_input_ids"] = sft_model._shift_right(example["labels"])
     return example
 
 
