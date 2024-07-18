@@ -32,8 +32,8 @@ from tqdm import tqdm
 
 TESTING = True
 
-PRECISION_NAME = 'float32'
-DEVICE = "cpu"
+PRECISION_NAME = 'float16'
+DEVICE = "cuda"
 CHOSEN_MODEL = "microsoft/phi-1_5"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
@@ -51,7 +51,7 @@ RM_LORA_PARAM_ALPHA = 64
 RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + ["dense", "out_proj"]
 RM_TRAIN_BATCH_SIZE = 5
 RM_LEARNING_RATE = 1e-5
-RM_TRAIN_DATA_RUN_ID = None
+RM_TRAIN_DATA_RUN_ID = "06d4cf76cc9c4b2aace1dd6d208bbc01"
 
 RL_LORA_PARAM_R = 32
 RL_LORA_PARAM_ALPHA = 64
