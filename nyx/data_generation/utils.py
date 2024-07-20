@@ -885,7 +885,7 @@ def generate_insights_with_comparisons(
         rationale_action_observation = element.get(prompt_col).split(
             RATIONALES_SPLIT_STRING
         )[1]
-        element['success_history'] = rationale_action_observation
+        element['success_trajectory'] = rationale_action_observation
         # Data only makes it into here if it succeeded after failure. So take everything until latest retry to get
         # failed trajectory.
         element['fail_history'] = 'Observation'.join(
@@ -913,7 +913,7 @@ def generate_insights_with_comparisons(
         }
         | task_prompt_template
     )
-    successful_insights_chain = {
+    comparison_insights_chain = {
         "task": rationale_prompt_chain,
         "success_history": itemgetter("success_trajectory"),
         "fail_history": itemgetter("fail_trajectory"),
@@ -922,7 +922,7 @@ def generate_insights_with_comparisons(
 
     for prompt in list_of_dict_dataset:
         prompt['insights'] = insights
-        prompts_to_complete = successful_insights_chain.invoke(prompt)
+        prompts_to_complete = comparison_insights_chain.invoke(prompt)
 
         tokenised_prompts = tokeniser(
             prompts_to_complete, padding=True, return_tensors="pt"
