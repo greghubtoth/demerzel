@@ -820,14 +820,14 @@ def generate_insights_successful(
     for prompt in list_of_dict_dataset:
         prompt['insights'] = insights
         template = successful_insights_chain.invoke(prompt)
-        distributed_state.print(f'successful insights template: {template}, {type(template)}')
-        distributed_state.print(f'successful insights template: {template.text}, prompt: {prompt}, {type(prompt)}')
-        prompts_to_complete = [
-            prompt.text for prompt in template
-        ]
+        # distributed_state.print(f'successful insights template: {template}, {type(template)}')
+        # distributed_state.print(f'successful insights template: {template.text}, prompt: {prompt}, {type(prompt)}')
+        # prompts_to_complete = [
+        #     prompt.text for prompt in template
+        # ]
 
         tokenised_prompts = tokeniser(
-            prompts_to_complete, padding=True, return_tensors="pt"
+            template.text, padding=True, return_tensors="pt"
         ).to(torch.device(distributed_state.device))
 
         with torch.no_grad():

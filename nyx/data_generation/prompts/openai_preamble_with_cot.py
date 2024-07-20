@@ -24,7 +24,7 @@ TASK_WITH_COT_LEE_ET_AL = (
 Summary 1 - {summary1}
 Summary 2 - {summary2}
 
-Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."""
+Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES."""
     + f"""{EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
 Rationale:"""
