@@ -819,8 +819,10 @@ def generate_insights_successful(
 
     for prompt in list_of_dict_dataset:
         prompt['insights'] = insights
+        template = successful_insights_chain.invoke(prompt)
+        distributed_state.print(f'successful insights template: {template}')
         prompts_to_complete = [
-            prompt.text for prompt in successful_insights_chain.invoke(prompt)
+            prompt.text for prompt in template
         ]
 
         tokenised_prompts = tokeniser(
