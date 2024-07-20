@@ -821,7 +821,7 @@ def generate_insights_successful(
         prompt['insights'] = insights
         template = successful_insights_chain.invoke(prompt)
         distributed_state.print(f'successful insights template: {template}, {type(template)}')
-        distributed_state.print(f'successful insights template: {template.text}')
+        distributed_state.print(f'successful insights template: {template.text}, prompt: {prompt}, {type(prompt)}')
         prompts_to_complete = [
             prompt.text for prompt in template
         ]
