@@ -13,11 +13,11 @@ REMOVE <EXISTING RULE NUMBER>: <EXISTING RULE>
 EDIT <EXISTING RULE NUMBER>: <NEW MODIFIED RULE>
 ADD <NEW RULE NUMBER>: <NEW RULE>
 
-Do not mention the trials in the rules because all the rules should be GENERALLY APPLICABLE. Each rule should be concise and easy to follow. Any operation can be used MULTIPLE times. Do at most 4 operations and each existing rule can only get a maximum of 1 operation.
+Do not mention the trials in the rules because all the rules should be GENERALLY APPLICABLE. Each rule should be concise and easy to follow. Any operation can be used MULTIPLE times. Do AT MOST 4 OPERATIONS and each existing rule can only get a maximum of 1 operation.
 """
 
 CRITIQUE_SUMMARY_SUFFIX = dict(
-    full=f"""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES.{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the operations you do to the above list of EXISTING RULES:\n""",
+    full=f"""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES. Below are the operations you do to the above list of EXISTING RULES:\n{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\n""",
     not_full=f"""{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the operations you do to the above list of EXISTING RULES:\n""",
 )
 

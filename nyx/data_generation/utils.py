@@ -922,9 +922,7 @@ def generate_insights_with_comparisons(
 
     for prompt in list_of_dict_dataset:
         prompt['insights'] = insights
-        prompts_to_complete = [
-            prompt.text for prompt in successful_insights_chain.invoke(prompt)
-        ]
+        prompts_to_complete = successful_insights_chain.invoke(prompt)
 
         tokenised_prompts = tokeniser(
             prompts_to_complete, padding=True, return_tensors="pt"
