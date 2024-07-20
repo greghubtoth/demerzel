@@ -358,7 +358,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                         target_words=target_words,
                     )
 
-                elif nth_retry >= 1:
+                elif nth_retry >= 1 and j <= self.insights_early_stopping:
                     # Above prompt is re-used and appended to.
                     (
                         ordered_reasoning,
@@ -377,6 +377,10 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                         reverse=True,
                         target_words=target_words,
                     )
+                else:
+                    # If early exit condition is satisfied then only COT with insights and examples are calculated.
+                    # In other words, no reflexion is generated and we skip onto the next subset of data.
+                    break
 
                 ai_choice_list = get_mean_of_probabilities(
                     predictions_with_both_ordered_combinations, target_words
@@ -426,11 +430,13 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
             # If current dataset <= early_stop_condition then generate insights.
             if j <= self.insights_early_stopping:
+                self.distributed_state.print('About to generate insights.')
                 self.generate_insights(
                     successful_attempts_dataset=insight_generation_step_dataset
                 )
 
             if self.utilise_examples is True:
+                self.distributed_state.print('In examples.')
                 self.add_examples_to_vector_db(
                     dataset=concatenate_datasets(
                         [insight_generation_step_dataset, dataset_within_step_size]

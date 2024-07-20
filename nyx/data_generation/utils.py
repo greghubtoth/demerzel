@@ -756,7 +756,6 @@ def parse_insights_to_dict(insights: str) -> Dict[str, str]:
 
 
 def update_insights(insight_actions: List[str], insights: str) -> str:
-    print(f'insight_actions: {insight_actions}')
     correctly_parsed_insight_actions = parse_insights_actions(
         completion=insight_actions[0]
     )
@@ -843,7 +842,7 @@ def generate_insights_successful(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-
+        distributed_state.print(f'successful insight_actions: {decoded_insight_actions}')
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
@@ -943,7 +942,7 @@ def generate_insights_with_comparisons(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-
+        distributed_state.print(f'comparison insight_actions: {decoded_insight_actions}')
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
