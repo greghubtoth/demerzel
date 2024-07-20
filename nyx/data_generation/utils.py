@@ -820,7 +820,8 @@ def generate_insights_successful(
     for prompt in list_of_dict_dataset:
         prompt['insights'] = insights
         template = successful_insights_chain.invoke(prompt)
-        distributed_state.print(f'successful insights template: {template}')
+        distributed_state.print(f'successful insights template: {template}, {type(template)}')
+        distributed_state.print(f'successful insights template: {template.text}')
         prompts_to_complete = [
             prompt.text for prompt in template
         ]
