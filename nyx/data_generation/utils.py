@@ -20,7 +20,7 @@ from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
-from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN
+from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
     COT_EXAMPLE, INSIGHTS, RETRIEVED_EXAMPLE_TEMPLATE)
 from nyx.data_generation.prompts.reflection import \
@@ -454,7 +454,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     """
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
     split_string = (
-        f'{tokeniser.eos_token}\n{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
+        f'{EOS_TOKEN}\n{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
     )
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
@@ -604,7 +604,7 @@ def generate_reflexion_and_cot_completions_with_gpus(
     batch_size = batch_size * 2
     template = (
         "{cot_prompt}{predicted_summary}"
-        + f"{tokeniser.eos_token}\n{SUMMARISATION_REFLEXION_PROMPT}"
+        + f"{EOS_TOKEN}\n{SUMMARISATION_REFLEXION_PROMPT}"
     )
     prompt_template = PromptTemplate.from_template(template)
 
