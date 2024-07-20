@@ -924,7 +924,7 @@ def generate_insights_with_comparisons(
         prompts_to_complete = comparison_insights_chain.invoke(prompt)
 
         tokenised_prompts = tokeniser(
-            prompts_to_complete, padding=True, return_tensors="pt"
+            prompts_to_complete.text, padding=True, return_tensors="pt"
         ).to(torch.device(distributed_state.device))
 
         with torch.no_grad():
