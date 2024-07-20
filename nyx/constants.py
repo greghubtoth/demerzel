@@ -39,7 +39,3 @@ RM_PEFT_ADAPTER_PATH = (
 RM_PEFT_MERGED_MODEL_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/merged-with-peft-adapter"
 )
-
-
-# RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
-RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES."

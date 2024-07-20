@@ -14,15 +14,14 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tqdm import tqdm
 from transformers import GenerationConfig
 
-from nyx.constants import (CANDIDATE_COL, POST_COL, PROMPTS_COL,
-                           RATIONALES_SPLIT_STRING)
+from nyx.constants import (CANDIDATE_COL, POST_COL, PROMPTS_COL,)
 from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
 from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
-    COT_EXAMPLE, INSIGHTS, RETRIEVED_EXAMPLE_TEMPLATE)
+    COT_EXAMPLE, INSIGHTS, RETRIEVED_EXAMPLE_TEMPLATE, RATIONALES_SPLIT_STRING)
 from nyx.data_generation.prompts.reflection import \
     SUMMARISATION_REFLEXION_PROMPT
 
@@ -888,7 +887,7 @@ def generate_insights_with_comparisons(
         element['success_trajectory'] = rationale_action_observation
         # Data only makes it into here if it succeeded after failure. So take everything until latest retry to get
         # failed trajectory.
-        element['fail_history'] = 'Observation'.join(
+        element['fail_trajectory'] = 'Observation'.join(
             rationale_action_observation.split('Observation')[:-1]
         )
 

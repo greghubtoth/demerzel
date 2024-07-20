@@ -19,13 +19,16 @@ You are an expert summary rater. Given a piece of text and two of its possible s
 INSIGHTS = "\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
+# RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
+RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES."
+
 TASK_WITH_COT_LEE_ET_AL = (
     """\nText - {text}
 Summary 1 - {summary1}
 Summary 2 - {summary2}
-
-Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES."""
-    + f"""{EOS_TOKEN}
+"""
+    + f"""
+{RATIONALES_SPLIT_STRING}{EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
 Rationale:"""
 )
