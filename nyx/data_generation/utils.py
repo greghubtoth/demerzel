@@ -609,7 +609,8 @@ def generate_reflexion_and_cot_completions_with_gpus(
     batch_size = batch_size * 2
     template = (
         "{cot_prompt}{predicted_summary}"
-        + f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT.replace('\n', ' ')}"""
+        + f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT.replace('''
+''', ' ')}"""
     )
     prompt_template = PromptTemplate.from_template(template)
 
