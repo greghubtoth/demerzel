@@ -19,8 +19,8 @@ You are an expert summary rater. Given a piece of text and two of its possible s
 INSIGHTS = "\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
-RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
-# RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES." # 77s on 50
+# RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
+RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES." # 77s on 50
 # RATIONALES_SPLIT_STRING = "CONCISELY consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better." # 169.3s on 50
 
 TASK_WITH_COT_LEE_ET_AL = (
