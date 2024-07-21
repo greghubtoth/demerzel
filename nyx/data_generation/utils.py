@@ -864,8 +864,14 @@ def generate_insights_successful(
         distributed_state.print(
             f'successful insight_actions: {decoded_insight_actions}'
         )
+        distributed_state.print(
+            f'Insights before update: {insights}'
+        )
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
+        )
+        distributed_state.print(
+            f'Insights after update: {insights}'
         )
 
     return insights
