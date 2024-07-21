@@ -17,7 +17,7 @@ Do not mention the trials in the rules because all the rules should be GENERALLY
 """
 
 CRITIQUE_SUMMARY_SUFFIX = dict(
-    full=f"""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES. Below are the operations you do to the above list of EXISTING RULES:\n{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\n""",
+    full=f"""Focus on REMOVE rules first, and stop ADD rule unless the new rule is VERY insightful and different from EXISTING RULES.{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the FOUR operations to the above list of EXISTING RULES:\n""",
     not_full=f"""{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nBelow are the operations you do to the above list of EXISTING RULES:\n""",
 )
 

@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 from operator import itemgetter
 from typing import Dict, List
@@ -426,9 +427,11 @@ def dataset_dict_to_langchain_batch_consumable(
 
 
 def cot_prompt_decoder(tokeniser, model_outputs):
+    rational_split = 'Rational:'
     decoded_completions = [
         # tokeniser specific changes
-        prompt[: -len(tokeniser.eos_token)].replace(tokeniser.pad_token, '')
+        ' '.join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, '') +
+        f" {prompt.split(rational_split)[-1].replace(EOS_TOKEN, '')}"
         + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
@@ -735,23 +738,31 @@ class InsightActions(Enum):
     agree = 'agree'
 
 
-def parse_insights_actions(completion: str) -> List[List[str]]:
-    seperator = 'Do at most 4 operations and each existing rule can only get a maximum of 1 operation.'
-    insight_actions = completion.split(seperator)[0].split('\n')
-    insight_actions = [action.strip().split(' ') for action in insight_actions]
-    correctly_parsed_insight_actions = [
-        action for action in insight_actions if len(action) == 3
-    ]
-    return correctly_parsed_insight_actions
+# def parse_insights_actions(completion: str) -> List[List[str]]:
+#     seperator = 'Do at most 4 operations and each existing rule can only get a maximum of 1 operation.'
+#     insight_actions = completion.split(seperator)[0].split('\n')
+#     insight_actions = [action.strip().split(' ') for action in insight_actions]
+#     correctly_parsed_insight_actions = [
+#         action for action in insight_actions if len(action) == 3
+#     ]
+#     return correctly_parsed_insight_actions
+
+def parse_insights_actions(text):
+    pattern = r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
+    matches = re.findall(pattern, text)
+    results = [(operation, int(number), string.strip()) for operation, number, string in matches]
+    return results
 
 
 def parse_insights_to_dict(insights: str) -> Dict[str, str]:
-    insights_list = insights.split('\n')
-    insights_dict = {
-        f'{index}': rule.split(':')[0].strip()
-        for index, rule in enumerate(insights_list)
-    }
-    return insights_dict
+    if len(insights) >= 1:
+        insights_list = insights.split('\n')
+        insights_dict = {
+            f'{index}': rule.split(':')[1].strip()
+            for index, rule in enumerate(insights_list)
+        }
+        return insights_dict
+    return dict()
 
 
 def update_insights(insight_actions: List[str], insights: str) -> str:
@@ -759,7 +770,7 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
         completion=insight_actions[0]
     )
     print(f'correctly_parsed_insight_actions: {correctly_parsed_insight_actions}')
-    insights_dict = parse_insights_to_dict(insights) if len(insights) >= 1 else {}
+    insights_dict = parse_insights_to_dict(insights)
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
         rule_number = rule_number.split(':')[0].strip()
