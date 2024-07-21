@@ -457,7 +457,8 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
     split_string = (
         # f'{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
-        f"{EOS_TOKEN}\n{SUMMARISATION_REFLEXION_PROMPT}"
+        f"""{EOS_TOKEN}
+{SUMMARISATION_REFLEXION_PROMPT}"""
     )
     decoded_completions = tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     print('===================\n', decoded_completions)
@@ -609,7 +610,8 @@ def generate_reflexion_and_cot_completions_with_gpus(
     batch_size = batch_size * 2
     template = (
         "{cot_prompt}{predicted_summary}"
-        + f"{EOS_TOKEN}\n{SUMMARISATION_REFLEXION_PROMPT}"
+        + f"""{EOS_TOKEN}
+{SUMMARISATION_REFLEXION_PROMPT}"""
     )
     prompt_template = PromptTemplate.from_template(template)
 
