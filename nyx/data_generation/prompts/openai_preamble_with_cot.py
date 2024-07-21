@@ -20,7 +20,8 @@ INSIGHTS = "\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
 # RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
-RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES."
+# RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better, in ONE or TWO SENTENCES." # 77s on 50
+RATIONALES_SPLIT_STRING = "CONCISELY consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."
 
 TASK_WITH_COT_LEE_ET_AL = (
     """\nText - {text}
