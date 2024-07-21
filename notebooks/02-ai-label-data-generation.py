@@ -38,7 +38,7 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = 'float16'  # f16 for qwen and phi models.
 DEVICE = "cuda"
-LABELLER_MODEL = "microsoft/Phi-3-medium-4k-instruct"
+LABELLER_MODEL = "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-7B-Instruct"
