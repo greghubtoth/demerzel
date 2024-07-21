@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from operator import itemgetter
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import datasets
 import torch
@@ -457,7 +457,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     decoded_completions = tokeniser.batch_decode(
         model_outputs, skip_special_tokens=False
     )
-    print('===================\n', decoded_completions)
+    # print('===================\n', decoded_completions)
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
 Observation: {prompt.split(split_string)[1].split('Observation:')[1].replace(tokeniser.pad_token, '').replace(EOS_TOKEN, '')}"""
@@ -748,11 +748,11 @@ class InsightActions(Enum):
 #     return correctly_parsed_insight_actions
 
 
-def parse_insights_actions(text):
+def parse_insights_actions(completion: str) -> List[Tuple[str, int, str]]:
     pattern = (
         r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
     )
-    matches = re.findall(pattern, text)
+    matches = re.findall(pattern, completion)
     results = [
         (operation, int(number), string.strip())
         for operation, number, string in matches
