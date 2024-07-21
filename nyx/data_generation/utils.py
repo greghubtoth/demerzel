@@ -754,7 +754,7 @@ def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
     )
     matches = re.findall(pattern, completion)
     results = [
-        (operation, number.strip(), string.strip())
+        (operation.lower(), number.strip(), string.strip())
         for operation, number, string in matches
     ]
     return results
