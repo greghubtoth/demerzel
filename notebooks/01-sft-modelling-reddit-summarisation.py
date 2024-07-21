@@ -47,7 +47,7 @@ LORA_PARAM_TARGET_MODULES = {
 # PRECISION = torch.float32
 PRECISION_NAME = 'bfloat16'
 DEVICE = "cuda"  # 0 if torch.cuda.is_available() else "cpu"
-CHOSEN_MODEL = "microsoft/phi-1_5"  # "microsoft/Phi-3-mini-4k-instruct" "bigscience/mt0-small" "google/flan-t5-large"
+CHOSEN_MODEL = "microsoft/Phi-3-mini-4k-instruct"  # "microsoft/phi-1_5"  "bigscience/mt0-small" "google/flan-t5-large"
 TESTING = True
 RUN_ID = uuid.uuid4().hex
 print(RUN_ID)
@@ -240,7 +240,7 @@ peft_training_args = TrainingArguments(
     gradient_accumulation_steps=2,  # Accumulate gradients over 2 steps
     fp16=True,  # Enable mixed precision
     # num_train_epochs=3,
-    save_steps=10_000,
+    save_steps=5_000,
     logging_steps=1,
     max_steps=len(tokenized_datasets["train"])
     // TRAIN_BATCH_SIZE,  # number of training data * 2, i.e. go over all data-summary pairs twice.
