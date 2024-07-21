@@ -457,8 +457,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
     split_string = (
         # f'{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
-        f"""{EOS_TOKEN}
-{SUMMARISATION_REFLEXION_PROMPT}"""
+        f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT}"""
     )
     decoded_completions = tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     print('===================\n', decoded_completions)
