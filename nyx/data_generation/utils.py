@@ -780,10 +780,10 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
         # rule_number = rule_number.split(':')[0].strip()
-        if action == InsightActions.edit or action == InsightActions.add:
+        if action == InsightActions.edit.value or action == InsightActions.add.value:
             print(f'\n\n\nadding or editing insight {rule_number}')
             insights_dict[rule_number] = rule
-        elif action == InsightActions.remove:
+        elif action == InsightActions.remove.value:
             insights_dict.pop(rule_number, None)
 
     insights_str = ''
