@@ -787,7 +787,7 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
             insights_dict.pop(rule_number, None)
 
     insights_str = ''
-    for index, rule in enumerate(list(insights_dict.values())):
+    for index, rule in enumerate(list(insights_dict.values()), start=1):
         insights_str += f'{index}: {rule}\n'
     return insights_str
 
@@ -1035,7 +1035,7 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
     batch_size = batch_size * 2
     preamble = OPENAI_PREAMBLE
     if insights is not None:
-        preamble += INSIGHTS
+        preamble += INSIGHTS.format(insights=insights)
     if vdb_retriever is not None:
         preamble += COT_EXAMPLE
 
@@ -1055,8 +1055,9 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
             else itemgetter(f"{CANDIDATE_COL}_2")
         ),
     }
-    if insights is not None:
-        chain_dict.update({"insights": insights})
+    # added as constant above.
+    # if insights is not None:
+    #     chain_dict.update({"insights": insights})
     if vdb_retriever is not None:
         chain_dict.update(
             {
