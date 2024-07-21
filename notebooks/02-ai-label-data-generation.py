@@ -86,6 +86,7 @@ config = {
     # Tóth et al. turning ExpeL from MC to n-step method.
     "insights_early_stopping": 8,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
+    "utilise_examples": True,
     "negative_examples:": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
