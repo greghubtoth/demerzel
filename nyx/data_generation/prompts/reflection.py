@@ -11,9 +11,7 @@ Docstore API environment and a question to answer. You were unsuccessful in answ
  In a few sentences, Diagnose a possible reason for failure and devise a new, concise, high level plan that aims to 
  mitigate the same failure. Use complete sentences."""
 
-SUMMARISATION_REFLEXION_PROMPT = f"""{BOS_USER_TOKEN} You were unsuccessful in rating the summaries above because you guessed the wrong 
+SUMMARISATION_REFLEXION_PROMPT = f"""{BOS_USER_TOKEN}\nYou were unsuccessful in rating the summaries above because you guessed the wrong 
 answer, or you used up your set number of reasoning steps. In ONE or TWO SENTENCES, Diagnose a possible reason for failure
 based on the above four evaluation axes and hypothesise how the right / other summary could be better than what was 
-chosen above. Use ONE or TWO complete sentences.{EOS_TOKEN}
-{BOS_ASSISTANT_TOKEN}
-Observation:"""
+chosen above. Use ONE or TWO complete sentences.{EOS_TOKEN}\n{BOS_ASSISTANT_TOKEN}\nObservation:"""
