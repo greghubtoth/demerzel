@@ -69,7 +69,7 @@ class AbstractDataGenerator(ABC):
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     device_map=self.distributed_state.device,
-                    attn_implementation="flash_attention_2",
+                    # attn_implementation="flash_attention_2",
                     token=access_token,
                 )
                 if self.multi_gpu_setup is True
@@ -77,7 +77,7 @@ class AbstractDataGenerator(ABC):
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     token=access_token,
-                    attn_implementation="flash_attention_2",
+                    # attn_implementation="flash_attention_2",
                 ).to(torch.device(self.device))
             )
 
@@ -87,7 +87,7 @@ class AbstractDataGenerator(ABC):
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     device_map=self.distributed_state.device,
-                    attn_implementation="flash_attention_2",
+                    # attn_implementation="flash_attention_2",
                     token=access_token,
                 )
                 if self.multi_gpu_setup is True
@@ -95,7 +95,7 @@ class AbstractDataGenerator(ABC):
                     self.llm_model_name,
                     torch_dtype=self.precision,
                     token=access_token,
-                    attn_implementation="flash_attention_2",
+#                     attn_implementation="flash_attention_2",
                 ).to(torch.device(self.device))
             )
 
