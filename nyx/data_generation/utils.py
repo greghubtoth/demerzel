@@ -459,11 +459,13 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
         # f'{BOS_USER_TOKEN}\nYou were unsuccessful in rating'
         f"{EOS_TOKEN}\n{SUMMARISATION_REFLEXION_PROMPT}"
     )
+    decoded_completions = tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
+    print('===================\n'. decoded_completions)
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
 Observation: {prompt.split(split_string)[1].replace(EOS_TOKEN, '')}"""
         # tokeniser specific changes
-        for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
+        for prompt in decoded_completions
     ]
     return decoded_completions
 
