@@ -61,36 +61,36 @@ print(f'RUN_ID: {RUN_ID}')
 # In[ ]:
 
 # BASELINE_LEE_ET_AL
-config = {
-    'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
-    'precision_name': PRECISION_NAME,
-    'device': DEVICE,
-    # 'dataset': data,
-    'batch_size': 4,
-    'run_id': RUN_ID,
-    'max_new_tokens': 800,
-}
-
-### ADAPTED_EXPEL_ET_AL
 # config = {
 #     'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
 #     'precision_name': PRECISION_NAME,
 #     'device': DEVICE,
 #     # 'dataset': data,
-#     'batch_size': 2,
+#     'batch_size': 4,
 #     'run_id': RUN_ID,
-#     'max_new_tokens': 512,
-#     "n_retries": 1,
-#     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-#     "insights_step_size": 4,
-#     # Tóth et al. turning ExpeL from MC to n-step method.
-#     "insights_early_stopping": 10,
-#     # Li et al. Negative examples are saved and can be retrieved for prompts.
-#     "negative_examples:": True,
-#     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
-#     "vdb_search_type": "similarity",
-#     "max_vdb_documents": 5_000,
+#     'max_new_tokens': 800,
 # }
+
+### ADAPTED_EXPEL_ET_AL
+config = {
+    'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
+    'precision_name': PRECISION_NAME,
+    'device': DEVICE,
+    # 'dataset': data,
+    'batch_size': 2,
+    'run_id': RUN_ID,
+    'max_new_tokens': 512,
+    "n_retries": 1,
+    # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
+    "insights_step_size": 4,
+    # Tóth et al. turning ExpeL from MC to n-step method.
+    "insights_early_stopping": 8,
+    # Li et al. Negative examples are saved and can be retrieved for prompts.
+    "negative_examples:": True,
+    "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
+    "vdb_search_type": "similarity",
+    "max_vdb_documents": 5_000,
+}
 
 data_generator = Controller(
     labelling_method=BASELINE_LEE_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
@@ -104,7 +104,7 @@ if TESTING is True:
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(range(50))
+    ].select(range(12))
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"

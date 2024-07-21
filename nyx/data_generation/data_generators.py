@@ -514,6 +514,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 reverse=reverse,
             )
             if len(self.doc_ids) == 0:
+                self.distributed_state.print('Setting up retriever!!')
                 self.set_up_retriever(documents=negative_docs)
             else:
                 negative_ids = self.example_retriever.add_documents(
@@ -531,6 +532,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             doc_ids_added.extend(positive_ids)
 
         self.doc_ids.extend(doc_ids_added)
+        self.distributed_state.print(f'doc_ids: {len(self.doc_ids)}')
         if len(self.doc_ids) > self.max_vdb_documents:
             n_docs_added = len(doc_ids_added)
             docs_to_remove = self.doc_ids[:n_docs_added]
