@@ -8,27 +8,22 @@
 # In[1]:
 
 
-import time
 import os
-import torch
-from peft import LoraConfig, TaskType, get_peft_model
-from trl import RewardConfig, RewardTrainer
-from typing import List
-import numpy as np
-
-from transformers import (
-    AutoModelForSeq2SeqLM,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline, AutoModelForCausalLM,
-)
-from datasets import load_from_disk
-
-from trl import PPOTrainer, PPOConfig, AutoModelForSeq2SeqLMWithValueHead
-from trl import create_reference_model
-from trl.core import LengthSampler
+import time
 import uuid
+from typing import List
+
+import numpy as np
+import torch
+from datasets import load_from_disk
+from peft import LoraConfig, TaskType, get_peft_model
 from tqdm import tqdm
+from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+                          AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
+from trl import (AutoModelForSeq2SeqLMWithValueHead, PPOConfig, PPOTrainer,
+                 RewardConfig, RewardTrainer, create_reference_model)
+from trl.core import LengthSampler
 
 TESTING = True
 
@@ -48,7 +43,10 @@ LORA_PARAM_TARGET_MODULES = {
 
 RM_LORA_PARAM_R = 32
 RM_LORA_PARAM_ALPHA = 64
-RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + ["dense", "out_proj"]
+RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
+    "dense",
+    "out_proj",
+]
 RM_TRAIN_BATCH_SIZE = 5
 RM_LEARNING_RATE = 1e-5
 RM_TRAIN_DATA_RUN_ID = "06d4cf76cc9c4b2aace1dd6d208bbc01"
@@ -65,27 +63,15 @@ RL_N_EPOCHS = 1
 # In[2]:
 
 
-from nyx.evaluation import quantitative_comparison
+from nyx.constants import (COMMON_OUTPUT_PATHS, COMPARISON_DATA_PATH,
+                           METRICS_PATH, RM_OUTPUT_DIR, RM_PEFT_ADAPTER_PATH,
+                           RM_PEFT_MERGED_MODEL_PATH, RM_TRAIN_DATA_PATH,
+                           SFT_DATA_OUTPUT_PATH, SFT_PEFT_ADAPTER_PATH,
+                           SFT_PEFT_MERGED_MODEL_PATH)
 from nyx.data_generation.evaluators import AILabelEvaluator
-
-from nyx.utils import (
-    precision_enumerator,
-    print_number_of_trainable_model_parameters,
-    get_task_type,
-)
-from nyx.constants import (
-    COMPARISON_DATA_PATH,
-    SFT_DATA_OUTPUT_PATH,
-    COMMON_OUTPUT_PATHS,
-    SFT_PEFT_MERGED_MODEL_PATH,
-    SFT_PEFT_ADAPTER_PATH,
-    RM_TRAIN_DATA_PATH,
-    RM_OUTPUT_DIR,
-    RM_PEFT_ADAPTER_PATH,
-    RM_PEFT_MERGED_MODEL_PATH,
-    METRICS_PATH,
-)
-
+from nyx.evaluation import quantitative_comparison
+from nyx.utils import (get_task_type, precision_enumerator,
+                       print_number_of_trainable_model_parameters)
 
 common_output_path = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
 
@@ -148,11 +134,17 @@ print(comparison_dataset)
 # )
 try:
     sft_model = AutoModelForSeq2SeqLM.from_pretrained(
-        SFT_PEFT_MERGED_MODEL_PATH, torch_dtype=PRECISION, device_map="auto", attn_implementation="flash_attention_2",
+        SFT_PEFT_MERGED_MODEL_PATH,
+        torch_dtype=PRECISION,
+        device_map="auto",
+        attn_implementation="flash_attention_2",
     )
 except ValueError:
     sft_model = AutoModelForCausalLM.from_pretrained(
-        SFT_PEFT_MERGED_MODEL_PATH, torch_dtype=PRECISION, device_map="auto", attn_implementation="flash_attention_2"
+        SFT_PEFT_MERGED_MODEL_PATH,
+        torch_dtype=PRECISION,
+        device_map="auto",
+        attn_implementation="flash_attention_2",
     )
 
 tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, padding_side='left')
@@ -224,18 +216,12 @@ def tokenize_function(example):
     # end_prompt = "\n\nSummary: "
     # prompt = [start_prompt + dialogue + end_prompt for dialogue in example["post"]]
     accepted = tokenizer(
-        example["accepted_summary"],
-        padding=True,
-        truncation=True,
-        return_tensors="pt",
+        example["accepted_summary"], padding=True, truncation=True, return_tensors="pt",
     )  # .to(torch.device(DEVICE))
     example["input_ids_chosen"] = accepted.input_ids
     example["attention_mask_chosen"] = accepted.attention_mask
     rejected = tokenizer(
-        example["rejected_summary"],
-        padding=True,
-        truncation=True,
-        return_tensors="pt",
+        example["rejected_summary"], padding=True, truncation=True, return_tensors="pt",
     )  # .to(torch.device(DEVICE))
     example["input_ids_rejected"] = rejected.input_ids
     example["attention_mask_rejected"] = rejected.attention_mask

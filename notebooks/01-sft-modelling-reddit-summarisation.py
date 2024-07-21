@@ -13,6 +13,7 @@ from peft import LoraConfig, PeftConfig, get_peft_model
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
                           AutoTokenizer, Trainer, TrainingArguments)
+
 from nyx.evaluation import quantitative_comparison
 
 # In[1]:
@@ -92,11 +93,15 @@ PRECISION
 
 try:
     original_model = AutoModelForSeq2SeqLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  #  attn_implementation="flash_attention_2",
+        CHOSEN_MODEL,
+        torch_dtype=PRECISION,
+        device_map="auto",  #  attn_implementation="flash_attention_2",
     )
 except ValueError:
     original_model = AutoModelForCausalLM.from_pretrained(
-        CHOSEN_MODEL, torch_dtype=PRECISION, device_map="auto",  #  attn_implementation="flash_attention_2"
+        CHOSEN_MODEL,
+        torch_dtype=PRECISION,
+        device_map="auto",  #  attn_implementation="flash_attention_2"
     )
 
 tokenizer = AutoTokenizer.from_pretrained(
@@ -168,12 +173,7 @@ def tokenize_function(example):
 # The tokenize_function code is handling all data across all splits in batches.
 tokenized_datasets = dataset.map(tokenize_function, batched=True)
 tokenized_datasets = tokenized_datasets.remove_columns(
-    [
-        "id",
-        "subreddit",
-        "post",
-        "summary",
-    ]
+    ["id", "subreddit", "post", "summary",]
 )
 
 
@@ -419,8 +419,6 @@ results_dict = {
     'testing': TESTING,
     'run_id': RUN_ID,
     'gpu_type': torch.cuda.get_device_name(),
-
-
 }
 
 with open(data_path, 'w') as file:

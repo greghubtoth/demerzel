@@ -15,14 +15,15 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tqdm import tqdm
 from transformers import GenerationConfig
 
-from nyx.constants import (CANDIDATE_COL, POST_COL, PROMPTS_COL,)
+from nyx.constants import CANDIDATE_COL, POST_COL, PROMPTS_COL
 from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
-from nyx.data_generation.prompts.model_specific_tokens import BOS_USER_TOKEN, EOS_TOKEN
+from nyx.data_generation.prompts.model_specific_tokens import (BOS_USER_TOKEN,
+                                                               EOS_TOKEN)
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
-    COT_EXAMPLE, INSIGHTS, RETRIEVED_EXAMPLE_TEMPLATE, RATIONALES_SPLIT_STRING)
+    COT_EXAMPLE, INSIGHTS, RATIONALES_SPLIT_STRING, RETRIEVED_EXAMPLE_TEMPLATE)
 from nyx.data_generation.prompts.reflection import \
     SUMMARISATION_REFLEXION_PROMPT
 
@@ -182,13 +183,7 @@ def generate_ai_labels_for_data(
     target_words = target_words if target_words is not None else ["1", "2"]
     summary_predictions = [[] for _ in target_words]
     # Process in batches
-    for i in tqdm(
-        range(
-            0,
-            len(dataset_to_label["train"][prompt_col]),
-            batch_size,
-        )
-    ):
+    for i in tqdm(range(0, len(dataset_to_label["train"][prompt_col]), batch_size,)):
         batch_prompts = dataset_to_label["train"][prompt_col][i : i + batch_size]
         input_ids = tokeniser(
             batch_prompts,
@@ -430,8 +425,8 @@ def cot_prompt_decoder(tokeniser, model_outputs):
     rational_split = 'Rational:'
     decoded_completions = [
         # tokeniser specific changes
-        ' '.join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, '') +
-        f" {prompt.split(rational_split)[-1].replace(EOS_TOKEN, '')}"
+        ' '.join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, '')
+        + f" {prompt.split(rational_split)[-1].replace(EOS_TOKEN, '')}"
         + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
@@ -459,7 +454,9 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
         f'{BOS_USER_TOKEN} You were unsuccessful in rating'
         # f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT}"""
     )
-    decoded_completions = tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
+    decoded_completions = tokeniser.batch_decode(
+        model_outputs, skip_special_tokens=False
+    )
     print('===================\n', decoded_completions)
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
@@ -519,8 +516,7 @@ def generate_tokens_with_gpus(
             single_batch = single_batch.to(distributed_state.device)
 
             labeller_outputs = labeller_model.generate(
-                **single_batch,
-                generation_config=generation_config,
+                **single_batch, generation_config=generation_config,
             )
             # labeller_outputs: List[str] that is of batch_size length
             # if reflexion, cut reflexion instructions and append reflexion
@@ -751,10 +747,16 @@ class InsightActions(Enum):
 #     ]
 #     return correctly_parsed_insight_actions
 
+
 def parse_insights_actions(text):
-    pattern = r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
+    pattern = (
+        r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
+    )
     matches = re.findall(pattern, text)
-    results = [(operation, int(number), string.strip()) for operation, number, string in matches]
+    results = [
+        (operation, int(number), string.strip())
+        for operation, number, string in matches
+    ]
     return results
 
 
@@ -859,7 +861,9 @@ def generate_insights_successful(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-        distributed_state.print(f'successful insight_actions: {decoded_insight_actions}')
+        distributed_state.print(
+            f'successful insight_actions: {decoded_insight_actions}'
+        )
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
@@ -957,7 +961,9 @@ def generate_insights_with_comparisons(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-        distributed_state.print(f'comparison insight_actions: {decoded_insight_actions}')
+        distributed_state.print(
+            f'comparison insight_actions: {decoded_insight_actions}'
+        )
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )

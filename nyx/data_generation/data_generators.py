@@ -509,9 +509,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         if self.negative_examples is True:
             negative_docs = get_documents_from_data(
-                failed_attempts,
-                negative_examples=True,
-                reverse=reverse,
+                failed_attempts, negative_examples=True, reverse=reverse,
             )
             if len(self.doc_ids) == 0:
                 self.distributed_state.print('Setting up retriever!!')
