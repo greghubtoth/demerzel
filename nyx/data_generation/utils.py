@@ -748,13 +748,13 @@ class InsightActions(Enum):
 #     return correctly_parsed_insight_actions
 
 
-def parse_insights_actions(completion: str) -> List[Tuple[str, int, str]]:
+def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
     pattern = (
         r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
     )
     matches = re.findall(pattern, completion)
     results = [
-        (operation, int(number), string.strip())
+        (operation, number.strip(), string.strip())
         for operation, number, string in matches
     ]
     return results
@@ -779,7 +779,7 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
     insights_dict = parse_insights_to_dict(insights)
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
-        rule_number = rule_number.split(':')[0].strip()
+        # rule_number = rule_number.split(':')[0].strip()
         if action == InsightActions.edit or action == InsightActions.add:
             insights_dict[rule_number] = rule
         elif action == InsightActions.remove:
