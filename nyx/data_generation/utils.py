@@ -460,7 +460,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
         f"{EOS_TOKEN}\n{SUMMARISATION_REFLEXION_PROMPT}"
     )
     decoded_completions = tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
-    print('===================\n'. decoded_completions)
+    print('===================\n', decoded_completions)
     decoded_completions = [
         f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
 Observation: {prompt.split(split_string)[1].replace(EOS_TOKEN, '')}"""
