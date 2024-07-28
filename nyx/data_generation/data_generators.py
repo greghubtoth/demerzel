@@ -280,6 +280,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         The config passed is validated as ExpelAdaptationConfigValidator. In other words, see the Validator for required
         and optional arguments.
         """
+        self.vdb_is_ready = False
         self.doc_ids = []
         self.insights = ''
         self.config = config
@@ -513,8 +514,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 failed_attempts, negative_examples=True, reverse=reverse,
             )
             if len(self.doc_ids) == 0:
-                self.distributed_state.print('Setting up retriever!!')
+                self.distributed_state.print('Setting up retriever negative!!')
                 self.set_up_retriever(documents=negative_docs)
+                self.vdb_is_ready = True
             else:
                 self.distributed_state.print('Adding negative docs to vector db!')
                 negative_ids = self.example_retriever.add_documents(
@@ -526,8 +528,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             successful_attempts, negative_examples=False
         )
         if len(self.doc_ids) == 0 and self.negative_examples is False:
-            self.distributed_state.print('Setting up retriever!!')
+            self.distributed_state.print('Setting up retriever positive!!')
             self.set_up_retriever(documents=positive_docs)
+            self.vdb_is_ready = True
         else:
             self.distributed_state.print('Adding positive docs to vector db!')
             positive_ids = self.example_retriever.add_documents(documents=positive_docs)
@@ -551,7 +554,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         insights_and_cot_example_kwargs = {}
         if len(self.insights) >= 1:
             insights_and_cot_example_kwargs["insights"] = self.insights
-        if len(self.doc_ids) >= 1:
+        if self.vdb_is_ready is True:
             insights_and_cot_example_kwargs["vdb_retriever"] = self.example_retriever
 
         cot_generations = generate_cot_with_insights_and_examples_prompts_with_gpus(

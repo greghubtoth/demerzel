@@ -976,9 +976,9 @@ def generate_insights_with_comparisons(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-        distributed_state.print(
-            f'comparison insight_actions: {decoded_insight_actions}'
-        )
+        # distributed_state.print(
+        #     f'comparison insight_actions: {decoded_insight_actions}'
+        # )
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
