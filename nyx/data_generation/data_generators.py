@@ -293,6 +293,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.validate_config()
         super().__init__(self.config)
         self.distributed_state.print(f"ExpelZhaoEtAlAdaptedDataGenerator is validated:\n{config}")
+        self.distributed_state.print(self.negative_examples)
         self.n_gpus_available = torch.cuda.device_count()
         self.insights_step_size = (
             self.insights_step_size
