@@ -98,7 +98,6 @@ data_generator = Controller(
     labelling_config=config,
     data_loader=HumanEvaluatedDataLoader,
 )
-
 if TESTING is True:
     # clean up <|end|> in Gemma and other CoT bits and or others, split them and replace.
     # indices = random.sample(range(0, 92859), 48)

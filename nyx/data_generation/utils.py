@@ -760,6 +760,14 @@ def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
     return results
 
 
+def parse_insights_str_to_dict(insights_str: str) -> Dict[str, str]:
+    pattern = r'(\d+): (.+?)(?=\s*\d+:|$)'
+    matches = re.findall(pattern, insights_str)
+    results = {number.strip(): string.strip() for number, string in matches}
+
+    return results
+
+
 def parse_insights_to_dict(insights: str) -> Dict[str, str]:
     if len(insights) >= 1:
         insights_list = insights.split('\n')
@@ -776,7 +784,7 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
         completion=insight_actions[0]
     )
     print(f'correctly_parsed_insight_actions: {correctly_parsed_insight_actions}')
-    insights_dict = parse_insights_to_dict(insights)
+    insights_dict = parse_insights_str_to_dict(insights)
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
         # rule_number = rule_number.split(':')[0].strip()
