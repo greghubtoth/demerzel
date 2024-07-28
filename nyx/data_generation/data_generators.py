@@ -513,7 +513,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
             )
-            if len(self.doc_ids) == 0:
+            if self.vdb_is_ready is False:
                 self.distributed_state.print('Setting up retriever negative!!')
                 self.set_up_retriever(documents=negative_docs)
                 self.vdb_is_ready = True
@@ -527,7 +527,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         positive_docs = get_documents_from_data(
             successful_attempts, negative_examples=False
         )
-        if len(self.doc_ids) == 0 and self.negative_examples is False:
+        if self.vdb_is_ready is False and self.negative_examples is False:
             self.distributed_state.print('Setting up retriever positive!!')
             self.set_up_retriever(documents=positive_docs)
             self.vdb_is_ready = True
