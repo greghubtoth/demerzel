@@ -150,6 +150,7 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
             "reversed_prompt_used_to_predict",
             "incorrect_prediction",
             "nth_retry",
+            "ai_choice_for_prompt",
         ]
 
         # Ensuring columns are updated if multiple retries occur.
