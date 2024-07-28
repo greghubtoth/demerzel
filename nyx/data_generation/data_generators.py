@@ -314,6 +314,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.client = weaviate.Client(
             embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
+        self.distributed_state.print(f'Will utilise negative examples: {self.negative_examples}.')
 
         # self.insight_retriever = vectorstore.as_retriever(
         #     search_type=self.vdb_search_type,
@@ -520,6 +521,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             f" {successful_attempts.num_rows} and {failed_attempts.num_rows}."
         )
         if self.negative_examples is True:
+            self.distributed_state.print('Adding negative examples.')
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
             )
