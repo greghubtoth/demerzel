@@ -870,12 +870,12 @@ def generate_insights_successful(
         decoded_insight_actions = tokeniser.batch_decode(
             labeller_outputs, skip_special_tokens=True
         )
-        distributed_state.print(
-            f'successful insight_actions: {decoded_insight_actions}'
-        )
-        distributed_state.print(
-            f'Insights before update: {insights}'
-        )
+        # distributed_state.print(
+        #     f'successful insight_actions: {decoded_insight_actions}'
+        # )
+        # distributed_state.print(
+        #     f'Insights before update: {insights}'
+        # )
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )

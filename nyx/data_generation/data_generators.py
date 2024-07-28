@@ -506,7 +506,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         failed_attempts = dataset.filter(
             lambda example: example["incorrect_prediction"].startswith("True")
         )
-
+        self.distributed_state.print(f"The successful and comparison dataset lengths are:"
+                                     f" {successful_attempts.num_rows} and {failed_attempts.num_rows}.")
         if self.negative_examples is True:
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
@@ -515,6 +516,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 self.distributed_state.print('Setting up retriever!!')
                 self.set_up_retriever(documents=negative_docs)
             else:
+                self.distributed_state.print('Adding negative docs to vector db!')
                 negative_ids = self.example_retriever.add_documents(
                     documents=negative_docs
                 )
@@ -524,8 +526,10 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             successful_attempts, negative_examples=False
         )
         if len(self.doc_ids) == 0 and self.negative_examples is False:
+            self.distributed_state.print('Setting up retriever!!')
             self.set_up_retriever(documents=positive_docs)
         else:
+            self.distributed_state.print('Adding positive docs to vector db!')
             positive_ids = self.example_retriever.add_documents(documents=positive_docs)
             doc_ids_added.extend(positive_ids)
 
