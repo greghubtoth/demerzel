@@ -87,12 +87,12 @@ config = {
     "insights_early_stopping": 8,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
-    "negative_examples:": True,
+    "negative_examples": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
     "max_vdb_documents": 5_000,
 }
-print(config)
+# print(config)
 data_generator = Controller(
     labelling_method=ADAPTED_EXPEL_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
     labelling_config=config,

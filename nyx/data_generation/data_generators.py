@@ -270,8 +270,8 @@ class ExpelAdaptationConfigValidator(ModelAndTokeniserInConfig):
     # The below parameter turns off insights when set to -1.
     insights_early_stopping: Optional[int] = -1
     # Li et al. Negative examples are saved and can be retrieved for prompts.
-    utilise_examples: Optional[bool] = False
-    negative_examples: Optional[Any] = True
+    utilise_examples: Optional[bool] = True
+    negative_examples: Optional[bool] = False
     embedding_model_name: Optional[str] = "sentence-transformers/all-mpnet-base-v2"
     vdb_search_type: Optional[str] = "similarity"
     max_vdb_documents: Optional[int] = 5_000
@@ -292,7 +292,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.config = config
         self.validate_config()
         super().__init__(self.config)
-        self.distributed_state.print(f"ExpelZhaoEtAlAdaptedDataGenerator is validated:\n{config}")
+        # self.distributed_state.print(f"ExpelZhaoEtAlAdaptedDataGenerator is validated:\n{config}")
         self.distributed_state.print(self.negative_examples)
         self.n_gpus_available = torch.cuda.device_count()
         self.insights_step_size = (
