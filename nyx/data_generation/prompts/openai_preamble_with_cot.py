@@ -16,7 +16,7 @@ Overall quality: This axis answers the question “how good is the summary overa
 
 You are an expert summary rater. Given a piece of text and two of its possible summaries, output 1 or 2 to indicate which summary best adheres to coherence, accuracy, coverage, and overall quality as defined above."""
 
-INSIGHTS = "\nINSIGHTS:\n{insights}"
+INSIGHTS = "\n\nINSIGHTS:\n{insights}"
 COT_EXAMPLE = "\nEXAMPLE:\n{example}"
 
 # RATIONALES_SPLIT_STRING = "Consider the coherence, accuracy, coverage, and overall quality of each summary and explain which one is better."

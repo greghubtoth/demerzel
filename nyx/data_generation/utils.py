@@ -426,7 +426,7 @@ def cot_prompt_decoder(tokeniser, model_outputs):
     decoded_completions = [
         # tokeniser specific changes
         ' '.join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, '')
-        + f" {prompt.split(rational_split)[-1].replace(EOS_TOKEN, '')}"
+        + f" {prompt.split(rational_split)[-1].replace(tokeniser.pad_token, '').replace(EOS_TOKEN, '')}"
         + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
     ]
@@ -750,7 +750,7 @@ class InsightActions(Enum):
 
 def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
     pattern = (
-        r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
+        r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=\s*(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
     )
     matches = re.findall(pattern, completion)
     results = [
