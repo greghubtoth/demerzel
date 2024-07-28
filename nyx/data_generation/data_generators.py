@@ -507,8 +507,10 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         failed_attempts = dataset.filter(
             lambda example: example["incorrect_prediction"].startswith("True")
         )
-        self.distributed_state.print(f"The successful and comparison dataset lengths are:"
-                                     f" {successful_attempts.num_rows} and {failed_attempts.num_rows}.")
+        self.distributed_state.print(
+            f"The successful and comparison dataset lengths are:"
+            f" {successful_attempts.num_rows} and {failed_attempts.num_rows}."
+        )
         if self.negative_examples is True:
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,

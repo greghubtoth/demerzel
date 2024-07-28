@@ -20,8 +20,8 @@ from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
-from nyx.data_generation.prompts.model_specific_tokens import (BOS_USER_TOKEN,
-                                                               EOS_TOKEN)
+from nyx.data_generation.prompts.model_specific_tokens import (
+    BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
     COT_EXAMPLE, INSIGHTS, RATIONALES_SPLIT_STRING, RETRIEVED_EXAMPLE_TEMPLATE)
 from nyx.data_generation.prompts.reflection import \
@@ -586,6 +586,10 @@ def generate_cot_for_prompts_with_gpus(
     return rationale_completions
 
 
+def convert_prediction_to_str(x: str) -> str:
+    return str(int(x) + 1)
+
+
 def generate_reflexion_and_cot_completions_with_gpus(
     dataset,
     labeller_model,
@@ -613,14 +617,14 @@ def generate_reflexion_and_cot_completions_with_gpus(
     # This chain only assembles the prompts
     reflexion_chain = {
         "cot_prompt": itemgetter(prompt_col),
-        "predicted_summary": itemgetter("ai_choice"),
+        "predicted_summary": RunnableLambda(convert_prediction_to_str) | itemgetter("ai_choice"),
     } | prompt_template
 
     requested_cols = [prompt_col, "ai_choice"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
         data=dataset, requested_cols=requested_cols
     )
-
+    # computes Observation:
     completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -640,7 +644,7 @@ def generate_reflexion_and_cot_completions_with_gpus(
     cot_with_reflexion_list_of_dict = [
         {'previous_attempt_with_reflexion': completion} for completion in completions
     ]
-
+    # computes Rationale:
     cot_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -720,7 +724,7 @@ def get_example_str_from_retrieved_doc(retrieved_documents: List[Document]) -> s
                 summary1=doc.metadata.get('summary1'),
                 summary2=doc.metadata.get('summary2'),
                 chain_of_thought=doc.metadata.get("reasoning"),
-                ai_choice=doc.metadata.get('predicted_label'),
+                ai_choice=int(doc.metadata.get('predicted_label')) + 1,
             )
             + f" {doc.metadata.get('end_string')}"
             for doc in retrieved_documents
@@ -879,9 +883,7 @@ def generate_insights_successful(
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
-        distributed_state.print(
-            f'Insights after update: {insights}'
-        )
+        distributed_state.print(f'Insights after update: {insights}')
 
     return insights
 
@@ -1002,7 +1004,9 @@ def get_documents_from_data(
         "ai_choice",
     ]
     end_of_example_string = (
-        "END OF BAD EXAMPLE." if negative_examples is True else "END OF GOOD EXAMPLE."
+        "(END OF BAD EXAMPLE.)\n"
+        if negative_examples is True
+        else "(END OF GOOD EXAMPLE.)\n"
     )
     # Get only thought, action, observation-s for successful trials, then group them 5 at a time.
     documents = [
@@ -1012,8 +1016,11 @@ def get_documents_from_data(
                 "type": "example",
                 "summary1": values[1],
                 "summary2": values[2],
-                # The split_string only exists for the model generated reasoning so it makes it easy to split on.
-                "reasoning": values[3].split(RATIONALES_SPLIT_STRING)[1],
+                # The split_string only exists for the model generated reasoning, so it makes it easy to split on.
+                "reasoning": values[3]
+                .split(RATIONALES_SPLIT_STRING)[1]
+                .replace('Preferred Summary=', '')
+                .replace(BOS_ASSISTANT_TOKEN, ''),
                 "predicted_label": values[4],
                 "end_string": end_of_example_string,
             },
