@@ -372,7 +372,7 @@ def calculate_target_token_probabilities_with_gpus(
 
 def get_mean_of_probabilities(
     predictions_dict: Dict[int, List[List[float]]], target_words
-):
+) -> List[int]:
     pm_decision_per_target_word = {}
     for j, target_word in enumerate(target_words):
         unbiased_predictions = torch.tensor(
@@ -586,10 +586,6 @@ def generate_cot_for_prompts_with_gpus(
     return rationale_completions
 
 
-def convert_prediction_to_str(x: str) -> str:
-    return str(int(x) + 1)
-
-
 def generate_reflexion_and_cot_completions_with_gpus(
     dataset,
     labeller_model,
@@ -617,10 +613,10 @@ def generate_reflexion_and_cot_completions_with_gpus(
     # This chain only assembles the prompts
     reflexion_chain = {
         "cot_prompt": itemgetter(prompt_col),
-        "predicted_summary": RunnableLambda(convert_prediction_to_str) | itemgetter("ai_choice"),
+        "predicted_summary": itemgetter("ai_choice_for_prompt"),
     } | prompt_template
 
-    requested_cols = [prompt_col, "ai_choice"]
+    requested_cols = [prompt_col, "ai_choice_for_prompt"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
         data=dataset, requested_cols=requested_cols
     )
@@ -724,7 +720,7 @@ def get_example_str_from_retrieved_doc(retrieved_documents: List[Document]) -> s
                 summary1=doc.metadata.get('summary1'),
                 summary2=doc.metadata.get('summary2'),
                 chain_of_thought=doc.metadata.get("reasoning"),
-                ai_choice=int(doc.metadata.get('predicted_label')) + 1,
+                ai_choice=doc.metadata.get('predicted_label'),
             )
             + f" {doc.metadata.get('end_string')}"
             for doc in retrieved_documents
@@ -1001,7 +997,7 @@ def get_documents_from_data(
         f"{CANDIDATE_COL}_1",
         f"{CANDIDATE_COL}_2",
         prompt_col,
-        "ai_choice",
+        "ai_choice_for_prompt",
     ]
     end_of_example_string = (
         "(END OF BAD EXAMPLE.)\n"

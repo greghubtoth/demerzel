@@ -162,6 +162,9 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
             name="ai_choice", column=ai_predicted_label_list
         )
         comparison_train_dataset = comparison_train_dataset.add_column(
+            name="ai_choice_for_prompt", column=[value + 1 for value in ai_predicted_label_list]
+        )
+        comparison_train_dataset = comparison_train_dataset.add_column(
             name="constant_col",
             column=[1 for _ in range(len(comparison_train_dataset))],
         )
