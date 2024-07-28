@@ -285,6 +285,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         The config passed is validated as ExpelAdaptationConfigValidator. In other words, see the Validator for required
         and optional arguments.
         """
+        self.n_negative_examples = 0
         self.vdb_is_ready = False
         self.doc_ids = []
         self.insights = ''
@@ -533,6 +534,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 )
                 doc_ids_added.extend(negative_ids)
 
+            self.n_negative_examples += len(negative_docs)
         positive_docs = get_documents_from_data(
             successful_attempts, negative_examples=False
         )
@@ -547,6 +549,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         self.doc_ids.extend(doc_ids_added)
         self.distributed_state.print(f'doc_ids: {len(self.doc_ids)}')
+        self.distributed_state.print(f'There are {self.n_negative_examples} negative examples in the VDB.')
         if len(self.doc_ids) > self.max_vdb_documents:
             n_docs_added = len(doc_ids_added)
             docs_to_remove = self.doc_ids[:n_docs_added]
