@@ -783,13 +783,13 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
     correctly_parsed_insight_actions = parse_insights_actions(
         completion=insight_actions[0]
     )
-    print(f'correctly_parsed_insight_actions: {correctly_parsed_insight_actions}')
+    # print(f'correctly_parsed_insight_actions: {correctly_parsed_insight_actions}')
     insights_dict = parse_insights_str_to_dict(insights)
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
         # rule_number = rule_number.split(':')[0].strip()
         if action == InsightActions.edit.value or action == InsightActions.add.value:
-            print(f'\n\n\nadding or editing insight {rule_number}')
+            # print(f'\n\n\nadding or editing insight {rule_number}')
             insights_dict[rule_number] = rule
         elif action == InsightActions.remove.value:
             insights_dict.pop(rule_number, None)
@@ -1016,7 +1016,7 @@ def get_documents_from_data(
                 "reasoning": values[3]
                 .split(RATIONALES_SPLIT_STRING)[1]
                 .replace('Preferred Summary=', '')
-                .replace(BOS_ASSISTANT_TOKEN, ''),
+                .replace(BOS_ASSISTANT_TOKEN, '').strip(),
                 "predicted_label": values[4],
                 "end_string": end_of_example_string,
             },
