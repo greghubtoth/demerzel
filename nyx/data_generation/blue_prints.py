@@ -42,6 +42,7 @@ class AbstractDataGenerator(ABC):
         The input dictionary is validated as ModelAndTokeniserInConfig
         """
         self.config = config
+        print(f'In the abstract data generator the config is: {self.config}.')
         self.validate_config()
         self.multi_gpu_setup = multi_gpu_setup
 
@@ -54,6 +55,7 @@ class AbstractDataGenerator(ABC):
         self.duration = 0
         # https://stackoverflow.com/questions/1639174/creating-class-instance-properties-from-a-dictionary
         for key, value in config.items():
+            print(f'assigning values: {key}={value} to abstract data generator.')
             setattr(self, key, value)
 
         # self.validate_run_id()
