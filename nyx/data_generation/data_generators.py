@@ -271,7 +271,7 @@ class ExpelAdaptationConfigValidator(ModelAndTokeniserInConfig):
     insights_early_stopping: Optional[int] = -1
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     utilise_examples: Optional[bool] = False
-    negative_examples: Optional[Any] = False
+    negative_examples: Optional[Any] = True
     embedding_model_name: Optional[str] = "sentence-transformers/all-mpnet-base-v2"
     vdb_search_type: Optional[str] = "similarity"
     max_vdb_documents: Optional[int] = 5_000
