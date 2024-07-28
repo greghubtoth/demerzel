@@ -92,7 +92,7 @@ config = {
     "vdb_search_type": "similarity",
     "max_vdb_documents": 5_000,
 }
-
+print(config)
 data_generator = Controller(
     labelling_method=ADAPTED_EXPEL_ET_AL,  # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
     labelling_config=config,
