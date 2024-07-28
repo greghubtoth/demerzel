@@ -163,7 +163,8 @@ class CotGeneratorWithGpus(AbstractDataGenerator):
             name="ai_choice", column=ai_predicted_label_list
         )
         comparison_train_dataset = comparison_train_dataset.add_column(
-            name="ai_choice_for_prompt", column=[value + 1 for value in ai_predicted_label_list]
+            name="ai_choice_for_prompt",
+            column=[value + 1 for value in ai_predicted_label_list],
         )
         comparison_train_dataset = comparison_train_dataset.add_column(
             name="constant_col",
@@ -385,6 +386,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 else:
                     # If early exit condition is satisfied then only COT with insights and examples are calculated.
                     # In other words, no reflexion is generated and we skip onto the next subset of data.
+                    self.distributed_state.print('early exiting because we are done generating new insights:'
+                                                 f'after {self.insights_early_stopping} and we are at {j}th step.')
                     break
 
                 ai_choice_list = get_mean_of_probabilities(
