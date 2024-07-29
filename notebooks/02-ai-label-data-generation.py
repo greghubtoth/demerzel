@@ -77,14 +77,14 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 2,
+    'batch_size': 4,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
     "n_retries": 1,
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-    "insights_step_size": 4,
+    "insights_step_size": 8,
     # Tóth et al. turning ExpeL from MC to n-step method.
-    "insights_early_stopping": 8,
+    "insights_early_stopping": 16,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
     "negative_examples": True,
@@ -104,7 +104,7 @@ if TESTING is True:
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(range(20))
+    ].select(range(40))
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"
