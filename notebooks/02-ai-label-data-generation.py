@@ -84,7 +84,7 @@ config = {
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
     "insights_step_size": 6,
     # Tóth et al. turning ExpeL from MC to n-step method.
-    "insights_early_stopping": 18,
+    "insights_early_stopping": 50,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
     "negative_examples": True,
@@ -104,7 +104,7 @@ if TESTING is True:
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(range(40))
+    ].select(range(10_000))
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"
