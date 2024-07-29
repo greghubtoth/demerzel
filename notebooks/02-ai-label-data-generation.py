@@ -77,7 +77,7 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 5,
+    'batch_size': 2,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
     "n_retries": 1,
@@ -87,7 +87,7 @@ config = {
     "insights_early_stopping": 120,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
-    "negative_examples": True,
+    "negative_examples": False,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
     "max_vdb_documents": 5_0000,

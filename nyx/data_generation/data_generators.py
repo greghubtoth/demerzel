@@ -346,8 +346,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             if self.need_to_update_insights_step_size is False:
                 dataset_range = (range(next_j, min(next_j + self.insights_step_size, self.dataset['train'].num_rows)))
 
-
-                if next_j + self.insights_step_size > self.dataset['train'].num_rows:
+                if next_j >= self.dataset['train'].num_rows:
                     break
                 next_j += self.insights_step_size
 
