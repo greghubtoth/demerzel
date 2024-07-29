@@ -77,20 +77,20 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 10,
+    'batch_size': 8,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
     "n_retries": 1,
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-    "insights_step_size": 80,
+    "insights_step_size": 64,
     # Tóth et al. turning ExpeL from MC to n-step method.
-    "insights_early_stopping": 160,
+    "insights_early_stopping": 64,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
     "negative_examples": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
-    "max_vdb_documents": 50,
+    "max_vdb_documents": 128,
 }
 # print(config)
 data_generator = Controller(
