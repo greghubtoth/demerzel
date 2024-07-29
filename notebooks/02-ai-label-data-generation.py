@@ -90,7 +90,7 @@ config = {
     "negative_examples": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
-    "max_vdb_documents": 5_000,
+    "max_vdb_documents": 50,
 }
 # print(config)
 data_generator = Controller(
@@ -104,7 +104,7 @@ if TESTING is True:
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(range(10_000))
+    ].select(range(240))
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"
