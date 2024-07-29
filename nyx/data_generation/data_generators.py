@@ -287,6 +287,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         """
         self.n_negative_examples = 0
         self.vdb_is_ready = False
+        self.need_to_update_insights_step_size = False
         self.doc_ids = []
         self.insights = ''
         self.config = config
@@ -336,12 +337,21 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             self.distributed_state.print(
                 f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}'
             )
+
+
             nth_retry = 0
-            dataset_within_step_size = self.dataset['train'].select(
-                range(
-                    j, min(j + self.insights_step_size, self.dataset['train'].num_rows)
-                )
-            )
+
+            # optimisation: when insights generations are finished. GPU batches will be looped with accelerate.
+            dataset_range = range(j, min(j + self.insights_step_size, self.dataset['train'].num_rows))
+            if self.need_to_update_insights_step_size is False:
+                dataset_range = (range(next_j, min(next_j + self.insights_step_size, self.dataset['train'].num_rows)))
+
+
+                if next_j + self.insights_step_size > self.dataset['train'].num_rows:
+                    break
+                next_j += self.insights_step_size
+
+            dataset_within_step_size = self.dataset['train'].select(dataset_range)
             insight_generation_step_dataset = Dataset.from_dict({})
             while (
                 nth_retry <= self.n_retries and dataset_within_step_size.num_rows >= 1
@@ -436,6 +446,12 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 self.generate_insights(
                     successful_attempts_dataset=insight_generation_step_dataset
                 )
+            elif j >= self.insights_early_stopping and self.need_to_update_insights_step_size is True:
+                next_j = j + self.insights_step_size
+                self.need_to_update_insights_step_size = False
+                self.insights_step_size *= 25
+
+
 
             if self.utilise_examples is True:
                 self.distributed_state.print('In examples.')
