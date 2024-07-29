@@ -287,7 +287,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         """
         self.n_negative_examples = 0
         self.vdb_is_ready = False
-        self.need_to_update_insights_step_size = False
+        self.need_to_update_insights_step_size = True
         self.doc_ids = []
         self.insights = ''
         self.config = config
