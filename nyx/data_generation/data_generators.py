@@ -522,7 +522,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             f"The successful and comparison dataset lengths are:"
             f" {successful_attempts.num_rows} and {failed_attempts.num_rows}."
         )
-        if self.negative_examples is True:
+        if self.negative_examples is True and failed_attempts.num_rows >= 1:
             self.distributed_state.print('Adding negative examples.')
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
@@ -542,14 +542,15 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         positive_docs = get_documents_from_data(
             successful_attempts, negative_examples=False
         )
-        if self.vdb_is_ready is False and self.negative_examples is False:
-            self.distributed_state.print('Setting up retriever positive!!')
-            self.set_up_retriever(documents=positive_docs)
-            self.vdb_is_ready = True
-        else:
-            self.distributed_state.print('Adding positive docs to vector db!')
-            positive_ids = self.example_retriever.add_documents(documents=positive_docs)
-            doc_ids_added.extend(positive_ids)
+        if successful_attempts.num_rows >= 1:
+            if self.vdb_is_ready is False and self.negative_examples is False:
+                self.distributed_state.print('Setting up retriever positive!!')
+                self.set_up_retriever(documents=positive_docs)
+                self.vdb_is_ready = True
+            else:
+                self.distributed_state.print('Adding positive docs to vector db!')
+                positive_ids = self.example_retriever.add_documents(documents=positive_docs)
+                doc_ids_added.extend(positive_ids)
 
         self.doc_ids.extend(doc_ids_added)
         self.distributed_state.print(f'doc_ids: {len(self.doc_ids)}')
