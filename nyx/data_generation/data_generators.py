@@ -305,7 +305,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             self.set_up_vector_db()
 
     def set_up_vector_db(self):
-        model_kwargs = {'device': self.device}
+        model_kwargs = {'device': 'cpu'}  # self.device
         encode_kwargs = {'normalize_embeddings': False}
         self.embeddings = HuggingFaceEmbeddings(
             model_name=self.embedding_model_name,
