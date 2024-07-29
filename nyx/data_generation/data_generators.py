@@ -328,10 +328,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
     def generate_labels(self) -> DatasetDict:
         start = time.time()
-        # predictions_with_both_ordered_combinations = {}
         target_words = ["1", "2"]
         comparison_train_dataset = Dataset.from_dict({})
-        # TBD with semantic embeddings chain
 
         for j in range(0, len(self.dataset['train']), self.insights_step_size):
             n_insights = self.insights.split('\n')
@@ -424,10 +422,6 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 )
 
                 nth_retry += 1
-            # At the end of the while loop, append the negative data too.
-            # insight_generation_step_dataset = concatenate_datasets(
-            #     [insight_generation_step_dataset, dataset_within_step_size]
-            # )
             comparison_train_dataset = concatenate_datasets(
                 [
                     comparison_train_dataset,
@@ -435,10 +429,6 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                     dataset_within_step_size,
                 ]
             )
-
-            # successful_attempts = insight_generation_step_dataset.filter(
-            #     lambda example: example["incorrect_prediction"].startswith("False")
-            # )
 
             # If current dataset <= early_stop_condition then generate insights.
             if j <= self.insights_early_stopping:
@@ -518,21 +508,21 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         failed_attempts = dataset.filter(
             lambda example: example["incorrect_prediction"].startswith("True")
         )
-        self.distributed_state.print(
-            f"The successful and comparison dataset lengths are:"
-            f" {successful_attempts.num_rows} and {failed_attempts.num_rows}."
-        )
+        # self.distributed_state.print(
+        #     f"The successful and comparison dataset lengths are:"
+        #     f" {successful_attempts.num_rows} and {failed_attempts.num_rows}."
+        # )
         if self.negative_examples is True and failed_attempts.num_rows >= 1:
-            self.distributed_state.print('Adding negative examples.')
+            # self.distributed_state.print('Adding negative examples.')
             negative_docs = get_documents_from_data(
                 failed_attempts, negative_examples=True, reverse=reverse,
             )
             if self.vdb_is_ready is False:
-                self.distributed_state.print('Setting up retriever negative!!')
+                # self.distributed_state.print('Setting up retriever negative!!')
                 self.set_up_retriever(documents=negative_docs)
                 self.vdb_is_ready = True
             else:
-                self.distributed_state.print('Adding negative docs to vector db!')
+                # self.distributed_state.print('Adding negative docs to vector db!')
                 negative_ids = self.example_retriever.add_documents(
                     documents=negative_docs
                 )
@@ -544,17 +534,17 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         )
         if successful_attempts.num_rows >= 1:
             if self.vdb_is_ready is False and self.negative_examples is False:
-                self.distributed_state.print('Setting up retriever positive!!')
+                # self.distributed_state.print('Setting up retriever positive!!')
                 self.set_up_retriever(documents=positive_docs)
                 self.vdb_is_ready = True
             else:
-                self.distributed_state.print('Adding positive docs to vector db!')
+                # self.distributed_state.print('Adding positive docs to vector db!')
                 positive_ids = self.example_retriever.add_documents(documents=positive_docs)
                 doc_ids_added.extend(positive_ids)
 
         self.doc_ids.extend(doc_ids_added)
-        self.distributed_state.print(f'doc_ids: {len(self.doc_ids)}')
-        self.distributed_state.print(f'There are {self.n_negative_examples} negative examples in the VDB.')
+        # self.distributed_state.print(f'doc_ids: {len(self.doc_ids)}')
+        # self.distributed_state.print(f'There are {self.n_negative_examples} negative examples in the VDB.')
         if len(self.doc_ids) > self.max_vdb_documents:
             n_docs_added = len(doc_ids_added)
             docs_to_remove = self.doc_ids[:n_docs_added]
