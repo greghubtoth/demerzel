@@ -549,7 +549,10 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             n_docs_added = len(doc_ids_added)
             docs_to_remove = self.doc_ids[:n_docs_added]
             self.doc_ids = self.doc_ids[n_docs_added:]
-            self.vectorstore.delete(docs_to_remove)
+            try:
+                self.vectorstore.delete(docs_to_remove)
+            except Exception as e:
+                print(f'some error occurred while deleting docs\n{e}')
 
     def generate_cot_with_1_shot_and_insights_with_gpus(
         self,
