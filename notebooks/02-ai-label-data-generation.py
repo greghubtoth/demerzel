@@ -87,7 +87,7 @@ config = {
     "insights_early_stopping": 120,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
-    "negative_examples": False,
+    "negative_examples": True,
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
     "max_vdb_documents": 5_0000,
