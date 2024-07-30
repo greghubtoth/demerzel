@@ -445,6 +445,13 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 self.generate_insights(
                     successful_attempts_dataset=insight_generation_step_dataset
                 )
+                if self.utilise_examples is True:
+                    self.distributed_state.print('In examples.')
+                    self.add_examples_to_vector_db(
+                        dataset=concatenate_datasets(
+                            [insight_generation_step_dataset, dataset_within_step_size]
+                        )
+                    )
             elif j >= self.insights_early_stopping and self.need_to_update_insights_step_size is True:
                 next_j = j + self.insights_step_size
                 self.need_to_update_insights_step_size = False
@@ -452,13 +459,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
 
 
-            if self.utilise_examples is True:
-                self.distributed_state.print('In examples.')
-                self.add_examples_to_vector_db(
-                    dataset=concatenate_datasets(
-                        [insight_generation_step_dataset, dataset_within_step_size]
-                    )
-                )
+
 
         end = time.time()
         self.duration = round(end - start, 2)
