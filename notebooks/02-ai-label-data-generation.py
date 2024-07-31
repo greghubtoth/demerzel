@@ -84,7 +84,7 @@ config = {
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
     "insights_step_size": 40,
     # Tóth et al. turning ExpeL from MC to n-step method.
-    "insights_early_stopping": 240,
+    "insights_early_stopping": 500,
     # Li et al. Negative examples are saved and can be retrieved for prompts.
     "utilise_examples": True,
     "negative_examples": True,
