@@ -795,7 +795,9 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
             insights_dict.pop(rule_number, None)
 
     insights_str = ''
-    for index, rule in enumerate(list(insights_dict.values()), start=1):
+    # Ensuring only unique insights are kept.
+    insights_list = sorted(set([i.strip() for i in list(insights_dict.values())]))
+    for index, rule in enumerate(insights_list, start=1):
         insights_str += f'{index}: {rule}\n'
     return insights_str
 
