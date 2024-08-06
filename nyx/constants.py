@@ -39,3 +39,10 @@ RM_PEFT_ADAPTER_PATH = (
 RM_PEFT_MERGED_MODEL_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/merged-with-peft-adapter"
 )
+
+RL_PEFT_ADAPTER_PATH = (
+    "{COMMON_OUTPUT_PATHS}/models/reinforcement-learning/peft-checkpoint-local"
+)
+RL_PEFT_MERGED_MODEL_PATH = (
+    "{COMMON_OUTPUT_PATHS}/models/reinforcement-learning/merged-with-peft-adapter"
+)
