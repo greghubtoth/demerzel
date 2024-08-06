@@ -1018,7 +1018,8 @@ def get_documents_from_data(
                 "reasoning": values[3]
                 .split(RATIONALES_SPLIT_STRING)[1]
                 .replace('Preferred Summary=', '')
-                .replace(BOS_ASSISTANT_TOKEN, '').strip(),
+                .replace(BOS_ASSISTANT_TOKEN, '')
+                .strip(),
                 "predicted_label": values[4],
                 "end_string": end_of_example_string,
             },

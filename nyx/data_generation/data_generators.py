@@ -317,7 +317,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.client = weaviate.Client(
             embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
-        self.distributed_state.print(f'Will utilise negative examples: {self.negative_examples}.')
+        self.distributed_state.print(
+            f'Will utilise negative examples: {self.negative_examples}.'
+        )
 
         # self.insight_retriever = vectorstore.as_retriever(
         #     search_type=self.vdb_search_type,
@@ -338,13 +340,19 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}'
             )
 
-
             nth_retry = 0
 
             # optimisation: when insights generations are finished. GPU batches will be looped with accelerate.
-            dataset_range = range(j, min(j + self.insights_step_size, self.dataset['train'].num_rows))
+            dataset_range = range(
+                j, min(j + self.insights_step_size, self.dataset['train'].num_rows)
+            )
             if self.need_to_update_insights_step_size is False:
-                dataset_range = (range(next_j, min(next_j + self.insights_step_size, self.dataset['train'].num_rows)))
+                dataset_range = range(
+                    next_j,
+                    min(
+                        next_j + self.insights_step_size, self.dataset['train'].num_rows
+                    ),
+                )
 
                 if next_j >= self.dataset['train'].num_rows:
                     break
@@ -397,8 +405,10 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 else:
                     # If early exit condition is satisfied then only COT with insights and examples are calculated.
                     # In other words, no reflexion is generated and we skip onto the next subset of data.
-                    self.distributed_state.print('early exiting because we are done generating new insights:'
-                                                 f'after {self.insights_early_stopping} and we are at {j}th step.')
+                    self.distributed_state.print(
+                        'early exiting because we are done generating new insights:'
+                        f'after {self.insights_early_stopping} and we are at {j}th step.'
+                    )
                     break
 
                 ai_choice_list = get_mean_of_probabilities(
@@ -452,14 +462,13 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                             [insight_generation_step_dataset, dataset_within_step_size]
                         )
                     )
-            elif j >= self.insights_early_stopping and self.need_to_update_insights_step_size is True:
+            elif (
+                j >= self.insights_early_stopping
+                and self.need_to_update_insights_step_size is True
+            ):
                 next_j = j + self.insights_step_size
                 self.need_to_update_insights_step_size = False
                 self.insights_step_size *= 25
-
-
-
-
 
         end = time.time()
         self.duration = round(end - start, 2)
@@ -555,7 +564,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 self.vdb_is_ready = True
             else:
                 # self.distributed_state.print('Adding positive docs to vector db!')
-                positive_ids = self.example_retriever.add_documents(documents=positive_docs)
+                positive_ids = self.example_retriever.add_documents(
+                    documents=positive_docs
+                )
                 doc_ids_added.extend(positive_ids)
 
         self.doc_ids.extend(doc_ids_added)
