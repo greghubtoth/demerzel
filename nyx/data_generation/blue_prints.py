@@ -98,6 +98,7 @@ class AbstractDataGenerator(ABC):
                 # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
             )
             self.tokeniser.padding_side = 'left'
+            FastLanguageModel.for_inference(self.labeller_model)
 
         except ValueError:
             self.labeller_model = (
