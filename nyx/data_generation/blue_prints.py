@@ -13,8 +13,8 @@ from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH, RM_TRAIN_DATA_PATH
 from nyx.utils import precision_enumerator
-from unsloth import FastLanguageModel
-from accelerate.utils import BnbQuantizationConfig
+# from unsloth import FastLanguageModel
+# from accelerate.utils import BnbQuantizationConfig
 
 class AbstractController(ABC):
     @abstractmethod
@@ -74,7 +74,6 @@ class AbstractDataGenerator(ABC):
         try:
             # bnb_quantization_config = BnbQuantizationConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16,
             #                                                 bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4")
-
             self.labeller_model = (
                 AutoModelForCausalLM.from_pretrained(
                     self.llm_model_name,
@@ -82,7 +81,7 @@ class AbstractDataGenerator(ABC):
                     device_map=self.distributed_state.device,
                     # attn_implementation="flash_attention_2",
                     token=access_token,
-                    load_in_4bit=load_in_4bit,
+                    # load_in_4bit=load_in_4bit, # works on its own, but will be deprecated
                 )
                 if self.multi_gpu_setup is True
                 else AutoModelForCausalLM.from_pretrained(
