@@ -12,6 +12,6 @@ GEMMA_BOS_USER = '<bos><start_of_turn>user'
 GEMMA_BOS_ASSISTANT = '<start_of_turn>model'
 
 # The generations will use the below suggested tokens, can be set to '' to disable, e.g. for mt0 models.
-EOS_TOKEN = PHI_EOS
-BOS_USER_TOKEN = PHI_BOS_USER
-BOS_ASSISTANT_TOKEN = PHI_BOS_ASSISTANT
+EOS_TOKEN = QWEN_EOS
+BOS_USER_TOKEN = QWEN_BOS_USER
+BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT

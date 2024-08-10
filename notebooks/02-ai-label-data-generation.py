@@ -38,7 +38,7 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = 'float16'  # f16 for qwen and phi models.
 DEVICE = "cuda"
-LABELLER_MODEL = "microsoft/Phi-3-medium-128k-instruct"
+LABELLER_MODEL = "unsloth/Qwen2-72B-Instruct-bnb-4bit"  # "microsoft/Phi-3-medium-128k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-7B-Instruct"
@@ -77,7 +77,7 @@ config = {
     'precision_name': PRECISION_NAME,
     'device': DEVICE,
     # 'dataset': data,
-    'batch_size': 2,
+    'batch_size': 4,
     'run_id': RUN_ID,
     'max_new_tokens': 512,
     "n_retries": 1,
@@ -104,7 +104,7 @@ if TESTING is True:
     # print(indices)
     data_generator.data_to_label["train"] = data_generator.data_to_label[
         "train"
-    ].select(range(10_000))
+    ].select(range(100))
     # ].select(indices)
     data_generator.data_to_label["validation"] = data_generator.data_to_label[
         "validation"

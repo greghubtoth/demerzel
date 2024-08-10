@@ -13,6 +13,7 @@ from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH, RM_TRAIN_DATA_PATH
 from nyx.utils import precision_enumerator
+from unsloth import FastLanguageModel
 
 
 class AbstractController(ABC):
@@ -65,23 +66,38 @@ class AbstractDataGenerator(ABC):
         if multi_gpu_setup is True:
             self.distributed_state = PartialState()
         access_token = os.environ.get('HF_TOKEN')
+
+        dtype = None  # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+        load_in_4bit = True  # Use 4bit quantization to reduce memory usage. Can be False.
+
+
         try:
-            self.labeller_model = (
-                AutoModelForCausalLM.from_pretrained(
-                    self.llm_model_name,
-                    torch_dtype=self.precision,
-                    device_map=self.distributed_state.device,
-                    # attn_implementation="flash_attention_2",
-                    token=access_token,
-                )
-                if self.multi_gpu_setup is True
-                else AutoModelForCausalLM.from_pretrained(
-                    self.llm_model_name,
-                    torch_dtype=self.precision,
-                    token=access_token,
-                    # attn_implementation="flash_attention_2",
-                ).to(torch.device(self.device))
+            # self.labeller_model = (
+            #     AutoModelForCausalLM.from_pretrained(
+            #         self.llm_model_name,
+            #         torch_dtype=self.precision,
+            #         device_map=self.distributed_state.device,
+            #         # attn_implementation="flash_attention_2",
+            #         token=access_token,
+            #     )
+            #     if self.multi_gpu_setup is True
+            #     else AutoModelForCausalLM.from_pretrained(
+            #         self.llm_model_name,
+            #         torch_dtype=self.precision,
+            #         token=access_token,
+            #         # attn_implementation="flash_attention_2",
+            #     ).to(torch.device(self.device))
+            # )
+            self.labeller_model, self.tokeniser = FastLanguageModel.from_pretrained(
+                model_name=self.llm_model_name,  # Reminder we support ANY Hugging Face model!
+                max_seq_length=8_000,
+                dtype=dtype,
+                load_in_4bit=load_in_4bit,
+                device_map=self.distributed_state.device,
+                # token=access_token,
+                # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
             )
+            self.tokeniser.padding_side = 'left'
 
         except ValueError:
             self.labeller_model = (
@@ -109,9 +125,9 @@ class AbstractDataGenerator(ABC):
         # Tokeniser padding should be left, so that the right most token is the most recent token. Thus making it easier
         # to get the right logits for probability computations.
         self.padding = 'left'
-        self.tokeniser = AutoTokenizer.from_pretrained(
-            self.tokeniser_name, padding_side=self.padding, token=access_token
-        )
+        # self.tokeniser = AutoTokenizer.from_pretrained(
+        #     self.tokeniser_name, padding_side=self.padding, token=access_token
+        # )
         self.tokeniser.pad_token = (
             self.tokeniser.pad_token
             if self.tokeniser.pad_token is not None
