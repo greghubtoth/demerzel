@@ -1,0 +1,62 @@
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+~/miniconda3/bin/conda init bash
+~/miniconda3/bin/conda init zsh
+
+conda create --name empire python=3.11
+conda activate empire
+git clone https://github.com/greghubtoth/demerzel.git
+cd demerzel
+git checkout develop
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip install setuptools==58.2.0
+# conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip uninstall pytorch torchvision torchaudio pytorch-cuda -c pytorch -c nvidia
+/home/ubuntu/miniconda3/envs/empire/bin/python -m  pip install -r requirements.txt
+conda install conda-forge::flash-attn
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install langchain_core langchain_community accelerate sentence-transformers evaluate
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install "git+https://github.com/AutoGPTQ/AutoGPTQ.git@v0.7.1"
+export HF_TOKEN='hf_token'
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
+
+/home/ubuntu/miniconda3/envs/empire/bin/accelerate launch --mixed_precision bf16 --num_processes 4 02-ai-label-data-generation.py
+/home/ubuntu/miniconda3/envs/empire/bin/python 02-ai-label-data-generation.py
+make install-develop
+/home/ubuntu/miniconda3/envs/empire/bin/python notebooks/01-sft-modelling-reddit-summarisation.py
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip install auto-gptq
+
+
+rsync -uav -e "ssh -i /Users/owner/Downloads/dissertation-experiments.pem" ubuntu@104.171.203.75:~/demerzel/notebooks/experiments/ /Users/owner/PycharmProjects/ai-msc-dissertation/notebooks/experiments
+
+rsync -uav -e "ssh -i /Users/owner/Downloads/dissertation-experiments.pem" /Users/owner/Downloads/copy_to_cluster/	ubuntu@104.171.203.75:~/demerzel/notebooks/experiments/
+rsync -uav -e "ssh -i /Users/owner/Downloads/dissertation-experiments.pem" /Users/owner/PycharmProjects/ai-msc-dissertation/notebooks/data/restructured_openai_comparison_data ubuntu@150.136.119.131:~/demerzel/notebooks/data/
+
+black . --skip-string-normalization && isort .
+
+
+
+## UNSLOT set up
+conda create --name empire \
+    python=3.10 \
+    pytorch-cuda=12.1 \
+    pytorch cudatoolkit xformers -c pytorch -c nvidia -c xformers -y
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install --no-deps "trl<0.9.0" peft accelerate bitsandbytes
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install --force-reinstall "xformers<0.0.27"
+
+git clone https://github.com/greghubtoth/demerzel.git
+cd demerzel
+git checkout develop
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip install setuptools==58.2.0
+# conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
+# /home/ubuntu/miniconda3/envs/empire/bin/python -m pip uninstall pytorch torchvision torchaudio pytorch-cuda -c pytorch -c nvidia
+/home/ubuntu/miniconda3/envs/empire/bin/python -m  pip install -r requirements.txt
+conda install conda-forge::flash-attn
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install langchain_core langchain_community accelerate sentence-transformers evaluate
+export HF_TOKEN='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'
+
+/home/ubuntu/miniconda3/envs/empire/bin/python -m pip install ipykernel
+python -m ipykernel install --user --name=empire
+
+
