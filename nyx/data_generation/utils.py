@@ -183,7 +183,13 @@ def generate_ai_labels_for_data(
     target_words = target_words if target_words is not None else ["1", "2"]
     summary_predictions = [[] for _ in target_words]
     # Process in batches
-    for i in tqdm(range(0, len(dataset_to_label["train"][prompt_col]), batch_size,)):
+    for i in tqdm(
+        range(
+            0,
+            len(dataset_to_label["train"][prompt_col]),
+            batch_size,
+        )
+    ):
         batch_prompts = dataset_to_label["train"][prompt_col][i : i + batch_size]
         input_ids = tokeniser(
             batch_prompts,
@@ -516,7 +522,8 @@ def generate_tokens_with_gpus(
             single_batch = single_batch.to(distributed_state.device)
 
             labeller_outputs = labeller_model.generate(
-                **single_batch, generation_config=generation_config,
+                **single_batch,
+                generation_config=generation_config,
             )
             # labeller_outputs: List[str] that is of batch_size length
             # if reflexion, cut reflexion instructions and append reflexion

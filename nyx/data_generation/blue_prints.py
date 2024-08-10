@@ -13,8 +13,10 @@ from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH, RM_TRAIN_DATA_PATH
 from nyx.utils import precision_enumerator
+
 # from unsloth import FastLanguageModel
 # from accelerate.utils import BnbQuantizationConfig
+
 
 class AbstractController(ABC):
     @abstractmethod
@@ -68,8 +70,9 @@ class AbstractDataGenerator(ABC):
         access_token = os.environ.get('HF_TOKEN')
 
         dtype = None  # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-        load_in_4bit = True  # Use 4bit quantization to reduce memory usage. Can be False.
-
+        load_in_4bit = (
+            True  # Use 4bit quantization to reduce memory usage. Can be False.
+        )
 
         try:
             # bnb_quantization_config = BnbQuantizationConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16,

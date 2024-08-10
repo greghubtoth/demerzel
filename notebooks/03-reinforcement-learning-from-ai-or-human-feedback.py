@@ -216,12 +216,18 @@ def tokenize_function(example):
     # end_prompt = "\n\nSummary: "
     # prompt = [start_prompt + dialogue + end_prompt for dialogue in example["post"]]
     accepted = tokenizer(
-        example["accepted_summary"], padding=True, truncation=True, return_tensors="pt",
+        example["accepted_summary"],
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
     )  # .to(torch.device(DEVICE))
     example["input_ids_chosen"] = accepted.input_ids
     example["attention_mask_chosen"] = accepted.attention_mask
     rejected = tokenizer(
-        example["rejected_summary"], padding=True, truncation=True, return_tensors="pt",
+        example["rejected_summary"],
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
     )  # .to(torch.device(DEVICE))
     example["input_ids_rejected"] = rejected.input_ids
     example["attention_mask_rejected"] = rejected.attention_mask

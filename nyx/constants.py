@@ -40,7 +40,6 @@ RM_PEFT_ADAPTER_PATH = (
 )
 RM_PEFT_MERGED_MODEL_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/merged-with-peft-adapter"
-
 )
 
 RL_PEFT_ADAPTER_PATH = (

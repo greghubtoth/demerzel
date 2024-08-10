@@ -540,7 +540,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         if self.negative_examples is True and failed_attempts.num_rows >= 1:
             # self.distributed_state.print('Adding negative examples.')
             negative_docs = get_documents_from_data(
-                failed_attempts, negative_examples=True, reverse=reverse,
+                failed_attempts,
+                negative_examples=True,
+                reverse=reverse,
             )
             if self.vdb_is_ready is False:
                 # self.distributed_state.print('Setting up retriever negative!!')
