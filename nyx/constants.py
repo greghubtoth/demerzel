@@ -33,11 +33,14 @@ PROMPTS_COL = "prompts"
 # Reward Modelling paths
 RM_TRAIN_DATA_PATH = "{COMMON_OUTPUT_PATHS}/data/labelled-train-data"
 RM_OUTPUT_DIR = "{COMMON_OUTPUT_PATHS}/models/reward-modelling/events"
+RL_OUTPUT_DIR = "{COMMON_OUTPUT_PATHS}/models/reinforcement-learning/events"
+
 RM_PEFT_ADAPTER_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/peft-checkpoint-local"
 )
 RM_PEFT_MERGED_MODEL_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/merged-with-peft-adapter"
+
 )
 
 RL_PEFT_ADAPTER_PATH = (
