@@ -72,8 +72,8 @@ class AbstractDataGenerator(ABC):
 
 
         try:
-            bnb_quantization_config = BnbQuantizationConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16,
-                                                            bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4")
+            # bnb_quantization_config = BnbQuantizationConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16,
+            #                                                 bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4")
 
             self.labeller_model = (
                 AutoModelForCausalLM.from_pretrained(
@@ -82,7 +82,7 @@ class AbstractDataGenerator(ABC):
                     device_map=self.distributed_state.device,
                     # attn_implementation="flash_attention_2",
                     token=access_token,
-                    quantization_config=bnb_quantization_config
+                    load_in_4bit=load_in_4bit,
                 )
                 if self.multi_gpu_setup is True
                 else AutoModelForCausalLM.from_pretrained(
