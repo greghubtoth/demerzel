@@ -42,21 +42,21 @@ def quantitative_comparison(
         prompts = [prompt.format(x_sample=x_sample) for x_sample in x_data]
         # print(prompts)
         # Tokenize prompts in a parallel fashion
-        input_ids = tokeniser(
+        tokenised_prompts = tokeniser(
             prompts,
             return_tensors="pt",
             padding=True,
             # truncation=True,
             # max_length=max_tokens,
-        )["input_ids"]
+        )#["input_ids"]
 
         # Move input_ids to the appropriate device (GPU if available)
-        input_ids = input_ids.to(torch.device(device))
+        tokenised_prompts = tokenised_prompts.to(torch.device(device))
 
         # Parallelised model generation
         with torch.no_grad():
             peft_model_outputs = model_to_test.generate(
-                input_ids=input_ids,
+                **tokenised_prompts,
                 generation_config=GenerationConfig(max_new_tokens=max_tokens),
             )
 
