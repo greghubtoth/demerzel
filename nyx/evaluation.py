@@ -48,7 +48,7 @@ def quantitative_comparison(
             padding=True,
             # truncation=True,
             # max_length=max_tokens,
-        )#["input_ids"]
+        )  # ["input_ids"]
 
         # Move input_ids to the appropriate device (GPU if available)
         tokenised_prompts = tokenised_prompts.to(torch.device(device))
