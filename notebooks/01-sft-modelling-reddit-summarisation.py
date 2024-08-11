@@ -173,12 +173,7 @@ def tokenize_function(example):
 # The tokenize_function code is handling all data across all splits in batches.
 tokenized_datasets = dataset.map(tokenize_function, batched=True)
 tokenized_datasets = tokenized_datasets.remove_columns(
-    [
-        "id",
-        "subreddit",
-        "post",
-        "summary",
-    ]
+    ["id", "subreddit", "post", "summary",]
 )
 
 
