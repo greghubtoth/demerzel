@@ -531,7 +531,7 @@ RM_PEFT_MERGED_MODEL_PATH
 
 
 rm_eval_data = comparison_dataset['validation'].train_test_split(
-    test_size=0.02, seed=RANDOM_SEED  # roughly 1'600 examples with 2%
+    test_size=0.15, seed=RANDOM_SEED  # roughly 1'200 examples with 2%
 )
 rm_eval_data['test']
 print(len(rm_eval_data['test']))
