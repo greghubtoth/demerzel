@@ -45,7 +45,7 @@ from tqdm import tqdm
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
-TESTING = True
+TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
@@ -269,7 +269,7 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 
 # tokenized_train_dataset['train']['summary_prompts_1'][0]
 
-HF_BASELINE_RUN = False
+HF_BASELINE_RUN = True
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
     choice_column = example["choice"] if hf_baseline is True else example["ai_choice"]
     # ai_choice is based on index choice 0 ==summary 1, choice 1 == summary 2
