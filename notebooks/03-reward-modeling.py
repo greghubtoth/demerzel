@@ -12,36 +12,27 @@
 # In[2]:
 
 
-import time
 import json
 import os
-import torch
-from peft import LoraConfig, TaskType, get_peft_model, PeftConfig
-from trl import RewardConfig, RewardTrainer
+import time
+import uuid
 from typing import List
+
+import evaluate
 import numpy as np
 import pandas as pd
-import evaluate
-
-from transformers import (
-    AutoModelForSeq2SeqLM,
-    AutoModelForCausalLM,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline,
-)
+import torch
 from datasets import load_from_disk
-
-from trl import (
-    PPOTrainer,
-    PPOConfig,
-    AutoModelForSeq2SeqLMWithValueHead,
-    AutoModelForCausalLMWithValueHead,
-)
-from trl import create_reference_model
-from trl.core import LengthSampler
-import uuid
+from peft import LoraConfig, PeftConfig, TaskType, get_peft_model
 from tqdm import tqdm
+from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+                          AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
+from trl import (AutoModelForCausalLMWithValueHead,
+                 AutoModelForSeq2SeqLMWithValueHead, PPOConfig, PPOTrainer,
+                 RewardConfig, RewardTrainer, create_reference_model)
+from trl.core import LengthSampler
+
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
@@ -49,7 +40,7 @@ TESTING = True
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
-CHOSEN_MODEL = "microsoft/phi-1_5"  #"Qwen/Qwen2-7B-Instruct"
+CHOSEN_MODEL = "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
 RUN_ID = "be140fa23e9e4452a7801060e9e7d6ba"  # SFT MODEL # uuid.uuid4().hex
@@ -76,7 +67,7 @@ LORA_PARAM_TARGET_MODULES = {
         "gate_proj",
         "up_proj",
         "down_proj",
-    ]
+    ],
 }
 
 RM_LORA_PARAM_R = 16
@@ -114,32 +105,18 @@ sys.path.append(nyx_path)
 # In[4]:
 
 
-from nyx.evaluation import quantitative_comparison
+from nyx.constants import (COMMON_OUTPUT_PATHS, COMPARISON_DATA_PATH,
+                           METRICS_PATH, RM_OUTPUT_DIR, RM_PEFT_ADAPTER_PATH,
+                           RM_PEFT_MERGED_MODEL_PATH, RM_TRAIN_DATA_PATH,
+                           SFT_DATA_OUTPUT_PATH, SFT_PEFT_ADAPTER_PATH,
+                           SFT_PEFT_MERGED_MODEL_PATH)
 from nyx.data_generation.evaluators import AILabelEvaluator
-
-from nyx.utils import (
-    precision_enumerator,
-    print_number_of_trainable_model_parameters,
-    get_task_type,
-    round_dictionary_values,
-)
-from nyx.constants import (
-    COMPARISON_DATA_PATH,
-    SFT_DATA_OUTPUT_PATH,
-    COMMON_OUTPUT_PATHS,
-    SFT_PEFT_MERGED_MODEL_PATH,
-    SFT_PEFT_ADAPTER_PATH,
-    RM_TRAIN_DATA_PATH,
-    RM_OUTPUT_DIR,
-    RM_PEFT_ADAPTER_PATH,
-    RM_PEFT_MERGED_MODEL_PATH,
-    METRICS_PATH,
-)
 from nyx.data_generation.prompts.model_specific_tokens import (
-    QWEN_EOS,
-    QWEN_BOS_USER,
-    QWEN_BOS_ASSISTANT,
-)
+    QWEN_BOS_ASSISTANT, QWEN_BOS_USER, QWEN_EOS)
+from nyx.evaluation import quantitative_comparison
+from nyx.utils import (get_task_type, precision_enumerator,
+                       print_number_of_trainable_model_parameters,
+                       round_dictionary_values)
 
 common_output_path = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
 
@@ -147,14 +124,6 @@ SFT_PEFT_ADAPTER_PATH = SFT_PEFT_ADAPTER_PATH.format(
     COMMON_OUTPUT_PATHS=common_output_path
 )
 SFT_PEFT_MERGED_MODEL_PATH = SFT_PEFT_MERGED_MODEL_PATH.format(
-    COMMON_OUTPUT_PATHS=common_output_path
-)
-
-RM_OUTPUT_DIR = RM_OUTPUT_DIR.format(COMMON_OUTPUT_PATHS=common_output_path)
-RM_PEFT_ADAPTER_PATH = RM_PEFT_ADAPTER_PATH.format(
-    COMMON_OUTPUT_PATHS=common_output_path
-)
-RM_PEFT_MERGED_MODEL_PATH = RM_PEFT_MERGED_MODEL_PATH.format(
     COMMON_OUTPUT_PATHS=common_output_path
 )
 
@@ -167,7 +136,17 @@ else:  # utilise current run_id
         COMMON_OUTPUT_PATHS=common_output_path
     )
 
-METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=common_output_path)
+OUTPUT_RUN_ID = uuid.uuid4().hex
+print(f'RM results will be saved to run_id directory: {OUTPUT_RUN_ID}')
+new_output_path = COMMON_OUTPUT_PATHS.format(RUN_ID=OUTPUT_RUN_ID)
+
+RM_OUTPUT_DIR = RM_OUTPUT_DIR.format(COMMON_OUTPUT_PATHS=new_output_path)
+RM_PEFT_ADAPTER_PATH = RM_PEFT_ADAPTER_PATH.format(COMMON_OUTPUT_PATHS=new_output_path)
+RM_PEFT_MERGED_MODEL_PATH = RM_PEFT_MERGED_MODEL_PATH.format(
+    COMMON_OUTPUT_PATHS=new_output_path
+)
+
+METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=new_output_path)
 
 PRECISION = precision_enumerator(PRECISION_NAME)
 PRECISION
@@ -186,8 +165,12 @@ comparison_train_dataset = load_from_disk(RM_TRAIN_DATA_PATH)
 
 if TESTING is True:
     comparison_dataset["train"] = comparison_dataset["train"].select(range(200))
-    comparison_train_dataset["train"] = comparison_train_dataset["train"].select(range(200))
-    comparison_dataset["validation"] = comparison_dataset["validation"].select(range(50))
+    comparison_train_dataset["train"] = comparison_train_dataset["train"].select(
+        range(200)
+    )
+    comparison_dataset["validation"] = comparison_dataset["validation"].select(
+        range(50)
+    )
 else:
     comparison_dataset = comparison_dataset.filter(
         lambda example, index: index % 10 == 0, with_indices=True
@@ -250,14 +233,19 @@ EOS_TOKEN = QWEN_EOS
 BOS_USER_TOKEN = QWEN_BOS_USER
 BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT
 
+
 def create_summary_cols(example):
-    example['summary_prompts_1'] = f'''{BOS_USER_TOKEN}
+    example[
+        'summary_prompts_1'
+    ] = f'''{BOS_USER_TOKEN}
 Summarize the following reddit post:
 {example["post"]}{EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
 Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
-    
-    example['summary_prompts_2'] = f'''{BOS_USER_TOKEN}
+
+    example[
+        'summary_prompts_2'
+    ] = f'''{BOS_USER_TOKEN}
 Summarize the following reddit post:
 {example["post"]}{EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
@@ -270,6 +258,8 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 # tokenized_train_dataset['train']['summary_prompts_1'][0]
 
 HF_BASELINE_RUN = False
+
+
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
     choice_column = example["choice"] if hf_baseline is True else example["ai_choice"]
     # ai_choice is based on index choice 0 ==summary 1, choice 1 == summary 2
@@ -327,7 +317,7 @@ def tokenize_function(example, hf_baseline: bool = HF_BASELINE_RUN):
     example["attention_mask_rejected"] = rejected.attention_mask
 
     example["labels"] = tokenizer(
-        [str(choice) for choice in choice_column], 
+        [str(choice) for choice in choice_column],
         padding=True,
         # padding='max_length',
         truncation=True,
@@ -370,7 +360,7 @@ reward_modelling_train_dataset
 
 
 rm_peft_model = AutoModelForSequenceClassification.from_pretrained(
-    SFT_PEFT_ADAPTER_PATH, load_in_4bit=True #torch_dtype=PRECISION
+    SFT_PEFT_ADAPTER_PATH, load_in_4bit=True  # torch_dtype=PRECISION
 )
 
 lora_config = LoraConfig(
@@ -605,7 +595,7 @@ rm_eval_data
 
 evaluator = AILabelEvaluator(
     data_to_evaluate=rm_eval_data,
-    run_id=RM_TRAIN_DATA_RUN_ID if RM_TRAIN_DATA_RUN_ID is not None else RUN_ID,
+    run_id=OUTPUT_RUN_ID,  # RM_TRAIN_DATA_RUN_ID if RM_TRAIN_DATA_RUN_ID is not None else RUN_ID,
 )
 
 evaluator.compute_metrics(data_split='test', predicted_col='rm_choice')
@@ -967,15 +957,36 @@ evaluator.compute_metrics(data_split='test', predicted_col='rm_choice')
 # )
 # METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=COMMON_OUTPUT_PATHS)
 #
-# if not os.path.exists(METRICS_PATH):
-#     os.makedirs(METRICS_PATH)
-#
-# data_path = f'{METRICS_PATH}/rl-results.json'
-#
+if not os.path.exists(METRICS_PATH):
+    os.makedirs(METRICS_PATH)
+
+data_path = f'{METRICS_PATH}/rm-config.json'
+
 # results_dict = {'sft-model': original_model_results, 'rl-model': peft_model_results}
-#
-# with open(data_path, 'w') as file:
-#     json.dump(results_dict, file)
+
+results_dict = {
+    'PRECISION_NAME': PRECISION_NAME,
+    'DEVICE': DEVICE,
+    'CHOSEN_MODEL': CHOSEN_MODEL,
+    'RANDOM_SEED': RANDOM_SEED,
+    'SFT_RUN_ID': RUN_ID,
+    'RM_TRAIN_DATA_RUN_ID': RM_TRAIN_DATA_RUN_ID,
+    'RM_LORA_PARAM_R': RM_LORA_PARAM_R,
+    'RM_LORA_PARAM_ALPHA': RM_LORA_PARAM_ALPHA,
+    'RM_LORA_PARAM_TARGET_MODULES': RM_LORA_PARAM_TARGET_MODULES,
+    'RM_TRAIN_BATCH_SIZE': RM_TRAIN_BATCH_SIZE,
+    'RM_LEARNING_RATE': RM_LEARNING_RATE,
+    # 'RL_LORA_PARAM_R': RL_LORA_PARAM_R,
+    # 'RL_LORA_PARAM_ALPHA': RL_LORA_PARAM_ALPHA,
+    # 'RL_LORA_PARAM_TARGET_MODULES': RL_LORA_PARAM_TARGET_MODULES,
+    # 'RL_TRAIN_BATCH_SIZE': RL_TRAIN_BATCH_SIZE,
+    # 'RL_TRAIN_MINI_BATCH_SIZE': RL_TRAIN_MINI_BATCH_SIZE,
+    # 'RL_LEARNING_RATE': RL_LEARNING_RATE,
+    # 'RL_N_EPOCHS': RL_N_EPOCHS,
+}
+
+with open(data_path, 'w') as file:
+    json.dump(results_dict, file)
 #
 # print("Absolute percentage improvement of PPO MODEL over SFT MODEL.")
 #
