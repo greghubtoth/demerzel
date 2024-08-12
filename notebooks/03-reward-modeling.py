@@ -166,7 +166,7 @@ comparison_train_dataset = load_from_disk(RM_TRAIN_DATA_PATH)
 if TESTING is True:
     comparison_dataset["train"] = comparison_dataset["train"].select(range(200))
     comparison_train_dataset["train"] = comparison_train_dataset["train"].select(
-        range(200)
+        range(50)
     )
     comparison_dataset["validation"] = comparison_dataset["validation"].select(
         range(50)
