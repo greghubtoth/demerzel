@@ -36,7 +36,7 @@ from trl.core import LengthSampler
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
-TESTING = True
+TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
