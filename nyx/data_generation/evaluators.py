@@ -66,7 +66,7 @@ class AILabelEvaluator(AbstractEvaluator):
             y_true=self.data_to_evaluate[data_split]["choice"],
             y_pred=self.data_to_evaluate[data_split][predicted_col],
         )
-        tn, fp, fn, tp = cm_results.unravel()
+        tn, fp, fn, tp = cm_results.ravel()
         print(f'tp: {tp}, fp: {fp}\nfn: {fn}, tn: {tn}')
         self.metrics.update(
             {'tn': int(tn), 'fp': int(fp), 'fn': int(fn), 'tp': int(tp)}
