@@ -166,7 +166,7 @@ comparison_train_dataset = load_from_disk(RM_TRAIN_DATA_PATH)
 if TESTING is True:
     comparison_dataset["train"] = comparison_dataset["train"].select(range(200))
     comparison_train_dataset["train"] = comparison_train_dataset["train"].select(
-        range(200)
+        range(50)
     )
     comparison_dataset["validation"] = comparison_dataset["validation"].select(
         range(50)
@@ -229,26 +229,36 @@ tokenizer.pad_token
 # In[8]:
 
 
-EOS_TOKEN = QWEN_EOS
+EOS_TOKEN = tokenizer.eos_token  # QWEN_EOS
 BOS_USER_TOKEN = QWEN_BOS_USER
 BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT
 
 
 def create_summary_cols(example):
+#     example[
+#         'summary_prompts_1'
+#     ] = f'''{BOS_USER_TOKEN}
+# Summarize the following reddit post:
+# {example["post"]}{EOS_TOKEN}
+# {BOS_ASSISTANT_TOKEN}
+# Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
+#     example[
+#         'summary_prompts_2'
+#     ] = f'''{BOS_USER_TOKEN}
+# Summarize the following reddit post:
+# {example["post"]}{EOS_TOKEN}
+# {BOS_ASSISTANT_TOKEN}
+# Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
     example[
         'summary_prompts_1'
-    ] = f'''{BOS_USER_TOKEN}
-Summarize the following reddit post:
-{example["post"]}{EOS_TOKEN}
-{BOS_ASSISTANT_TOKEN}
+    ] = f'''Summarize the following reddit post:
+{example["post"]}
 Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
 
     example[
         'summary_prompts_2'
-    ] = f'''{BOS_USER_TOKEN}
-Summarize the following reddit post:
-{example["post"]}{EOS_TOKEN}
-{BOS_ASSISTANT_TOKEN}
+    ] = f'''Summarize the following reddit post:
+{example["post"]}
 Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
     return example
 
