@@ -79,7 +79,7 @@ RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
 ]
 RM_TRAIN_BATCH_SIZE = 10
 RM_LEARNING_RATE = 5e-5
-RM_TRAIN_DATA_RUN_ID = "b592e2304b5c4b41a33236871ed4e195"
+RM_TRAIN_DATA_RUN_ID = "98608803ef184213bc1a13cf62cdf737"  # generate data ID
 
 RL_LORA_PARAM_R = 16
 RL_LORA_PARAM_ALPHA = 16
@@ -267,7 +267,7 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 
 # tokenized_train_dataset['train']['summary_prompts_1'][0]
 
-HF_BASELINE_RUN = True
+HF_BASELINE_RUN = False
 
 
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
@@ -997,7 +997,10 @@ results_dict = {
 
 with open(data_path, 'w') as file:
     json.dump(results_dict, file)
-#
+
+print('\n\n')
+print(OUTPUT_RUN_ID)
+print(results_dict)
 # print("Absolute percentage improvement of PPO MODEL over SFT MODEL.")
 #
 # improvement = np.array(list(peft_model_results.values())) - np.array(

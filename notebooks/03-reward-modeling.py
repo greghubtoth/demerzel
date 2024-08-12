@@ -79,7 +79,7 @@ RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
 ]
 RM_TRAIN_BATCH_SIZE = 10
 RM_LEARNING_RATE = 5e-5
-RM_TRAIN_DATA_RUN_ID = "b592e2304b5c4b41a33236871ed4e195"
+RM_TRAIN_DATA_RUN_ID = "39f5bda3ba5645cfb396e3d30d80a10e"  # generate data ID
 
 RL_LORA_PARAM_R = 16
 RL_LORA_PARAM_ALPHA = 16
@@ -997,6 +997,10 @@ results_dict = {
 
 with open(data_path, 'w') as file:
     json.dump(results_dict, file)
+
+print('\n\n')
+print(OUTPUT_RUN_ID)
+print(results_dict)
 #
 # print("Absolute percentage improvement of PPO MODEL over SFT MODEL.")
 #
