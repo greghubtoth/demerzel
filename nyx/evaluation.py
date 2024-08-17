@@ -64,6 +64,7 @@ def quantitative_comparison(
             tokeniser.batch_decode(peft_model_outputs, skip_special_tokens=True)
         )
 
+
     model_generations = [
         pred for list_of_preds in predictions for pred in list_of_preds
     ]
