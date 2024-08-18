@@ -79,7 +79,7 @@ RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
 ]
 RM_TRAIN_BATCH_SIZE = 3
 RM_LEARNING_RATE = 5e-5
-RM_TRAIN_DATA_RUN_ID = "1c664836d1b245a8835808b5dfff02fe"  # generate data ID
+RM_TRAIN_DATA_RUN_ID = "39f5bda3ba5645cfb396e3d30d80a10e"  # generate data ID
 
 RL_LORA_PARAM_R = 16
 RL_LORA_PARAM_ALPHA = 16
@@ -267,7 +267,7 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 
 # tokenized_train_dataset['train']['summary_prompts_1'][0]
 
-HF_BASELINE_RUN = True
+HF_BASELINE_RUN = False
 print(f'HF_BASELINE_RUN: {HF_BASELINE_RUN}')
 
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
