@@ -129,7 +129,7 @@ from nyx.constants import (
     METRICS_PATH,
     RL_OUTPUT_DIR,
     RL_PEFT_ADAPTER_PATH,
-    RL_PEFT_MERGED_MODEL_PATH,
+    RL_PEFT_MERGED_MODEL_PATH, KL_DIVERGENCE, ADVANTAGES_MEAN, RETURNS_MEAN,
 )
 from nyx.data_generation.prompts.model_specific_tokens import (
     QWEN_EOS,
@@ -448,6 +448,9 @@ output_min_length = 25
 output_max_length = 50
 output_length_sampler = LengthSampler(output_min_length, output_max_length)
 
+stats_to_log = {KL_DIVERGENCE: [], ADVANTAGES_MEAN: [], RETURNS_MEAN: []}
+
+
 preferred_summary_index = 0
 
 generation_kwargs = {
@@ -501,6 +504,9 @@ for step, batch in tqdm(enumerate(ppo_trainer.dataloader)):
 
     # Run PPO step.
     stats = ppo_trainer.step(prompt_tensors, response_tensors, reward_tensors)
+    stats_to_log[KL_DIVERGENCE].append(stats["objective/kl"])
+    stats_to_log[ADVANTAGES_MEAN].append(stats["ppo/policy/advantages_mean"])
+    stats_to_log[RETURNS_MEAN].append(stats["ppo/returns/mean"])
     ppo_trainer.log_stats(stats, batch, reward_tensors)
 
     print(f'objective/kl: {stats["objective/kl"]}')
@@ -661,7 +667,7 @@ print(peft_model_results)
 if not os.path.exists(METRICS_PATH):
     os.makedirs(METRICS_PATH)
 
-data_path = f'{METRICS_PATH}/rl-results.json'
+data_path = f'{METRICS_PATH}/phi-1-5-rl-results.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-rl-results.json'
 
 results_dict = {'sft-model': original_model_results, 'rl-model': peft_model_results, 'n_eval_samples': N_EVAL_SAMPLES}
 
@@ -697,12 +703,19 @@ results_dict = {
     'RL_MAX_PPO_STEPS': max_ppo_steps,
 }
 
-data_path = f'{METRICS_PATH}/rl-config.json'
-with open(data_path, 'w') as file:
+config_data_path = f'{METRICS_PATH}/phi-1-5-rl-config.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-rl-config.json'
+with open(config_data_path, 'w') as file:
     json.dump(results_dict, file)
 
 
 # In[ ]:
+stats_to_log['human-baseline-answers'] = human_baseline_answer
+stats_to_log['ppo-model-answers'] = peft_checkpoint_generation
+stats_to_log['sft-model-answers'] = baseline_model_generation
+
+telemetry_data_path = f'{METRICS_PATH}/phi-1-5-ppo-telemetry.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-ppo-telemetry.json'
+with open(telemetry_data_path, 'w') as file:
+    json.dump(stats_to_log, file)
 
 
 print('\n\n')

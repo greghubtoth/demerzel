@@ -29,6 +29,9 @@ INFO_COL = "info"
 POST_COL = "post"
 SUBREDDIT_COL = "subreddit"
 PROMPTS_COL = "prompts"
+KL_DIVERGENCE = 'kl-divergence'
+ADVANTAGES_MEAN = 'advantages-mean'
+RETURNS_MEAN = 'returns-mean'
 
 # Reward Modelling paths
 RM_TRAIN_DATA_PATH = "{COMMON_OUTPUT_PATHS}/data/labelled-train-data"
