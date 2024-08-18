@@ -33,7 +33,7 @@ from trl import (AutoModelForCausalLMWithValueHead,
                  RewardConfig, RewardTrainer, create_reference_model)
 from trl.core import LengthSampler
 
-# from unsloth import FastLanguageModel
+from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
 TESTING = False
@@ -77,7 +77,7 @@ RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
     # "out_proj",
     "score"
 ]
-RM_TRAIN_BATCH_SIZE = 4
+RM_TRAIN_BATCH_SIZE = 3
 RM_LEARNING_RATE = 5e-5
 RM_TRAIN_DATA_RUN_ID = "1c664836d1b245a8835808b5dfff02fe"  # generate data ID
 
