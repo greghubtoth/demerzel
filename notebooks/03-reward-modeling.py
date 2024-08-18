@@ -36,14 +36,14 @@ from trl.core import LengthSampler
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
-TESTING = False
+TESTING = True
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
-CHOSEN_MODEL = "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
+CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit"  # "Qwen/Qwen2-7B-Instruct"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
-RUN_ID = "be140fa23e9e4452a7801060e9e7d6ba"  # SFT MODEL # uuid.uuid4().hex
+RUN_ID = "ae517069e3734bb4884dfa7fed5db18f"  # SFT MODEL # uuid.uuid4().hex
 
 LORA_PARAM_TARGET_MODULES = {
     "bigscience/mt0-small": ["q", "v"],
@@ -164,7 +164,7 @@ comparison_dataset = load_from_disk(COMPARISON_DATA_PATH)
 comparison_train_dataset = load_from_disk(RM_TRAIN_DATA_PATH)
 
 if TESTING is True:
-    comparison_dataset["train"] = comparison_dataset["train"].select(range(200))
+    comparison_dataset["train"] = comparison_dataset["train"].select(range(100))
     comparison_train_dataset["train"] = comparison_train_dataset["train"].select(
         range(50)
     )
@@ -986,13 +986,6 @@ results_dict = {
     'RM_LORA_PARAM_TARGET_MODULES': RM_LORA_PARAM_TARGET_MODULES,
     'RM_TRAIN_BATCH_SIZE': RM_TRAIN_BATCH_SIZE,
     'RM_LEARNING_RATE': RM_LEARNING_RATE,
-    # 'RL_LORA_PARAM_R': RL_LORA_PARAM_R,
-    # 'RL_LORA_PARAM_ALPHA': RL_LORA_PARAM_ALPHA,
-    # 'RL_LORA_PARAM_TARGET_MODULES': RL_LORA_PARAM_TARGET_MODULES,
-    # 'RL_TRAIN_BATCH_SIZE': RL_TRAIN_BATCH_SIZE,
-    # 'RL_TRAIN_MINI_BATCH_SIZE': RL_TRAIN_MINI_BATCH_SIZE,
-    # 'RL_LEARNING_RATE': RL_LEARNING_RATE,
-    # 'RL_N_EPOCHS': RL_N_EPOCHS,
 }
 
 with open(data_path, 'w') as file:

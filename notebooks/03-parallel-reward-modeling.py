@@ -40,10 +40,10 @@ TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
-CHOSEN_MODEL = "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
+CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit"  # "Qwen/Qwen2-7B-Instruct"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
-RUN_ID = "be140fa23e9e4452a7801060e9e7d6ba"  # SFT MODEL # uuid.uuid4().hex
+RUN_ID = "ae517069e3734bb4884dfa7fed5db18f"  # SFT MODEL # uuid.uuid4().hex
 
 LORA_PARAM_TARGET_MODULES = {
     "bigscience/mt0-small": ["q", "v"],
@@ -79,7 +79,7 @@ RM_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL] + [
 ]
 RM_TRAIN_BATCH_SIZE = 10
 RM_LEARNING_RATE = 5e-5
-RM_TRAIN_DATA_RUN_ID = "8cb27c1524fe4f7f817fa524859bab07"  # generate data ID
+RM_TRAIN_DATA_RUN_ID = "1c664836d1b245a8835808b5dfff02fe"  # generate data ID
 
 RL_LORA_PARAM_R = 16
 RL_LORA_PARAM_ALPHA = 16
@@ -267,8 +267,8 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 
 # tokenized_train_dataset['train']['summary_prompts_1'][0]
 
-HF_BASELINE_RUN = False
-
+HF_BASELINE_RUN = True
+print(f'HF_BASELINE_RUN: {HF_BASELINE_RUN}')
 
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
     choice_column = example["choice"] if hf_baseline is True else example["ai_choice"]
