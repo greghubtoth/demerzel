@@ -33,7 +33,7 @@ from trl import (AutoModelForCausalLMWithValueHead,
                  RewardConfig, RewardTrainer, create_reference_model)
 from trl.core import LengthSampler
 
-from unsloth import FastLanguageModel
+# from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
 TESTING = False
