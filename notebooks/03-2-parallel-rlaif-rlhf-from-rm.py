@@ -162,6 +162,7 @@ if RM_TRAIN_DATA_RUN_ID is not None:
     RL_OUTPUT_DIR = RL_OUTPUT_DIR.format(COMMON_OUTPUT_PATHS=rm_common_path)
     RL_PEFT_ADAPTER_PATH = RL_PEFT_ADAPTER_PATH.format(COMMON_OUTPUT_PATHS=rm_common_path)
     RL_PEFT_MERGED_MODEL_PATH = RL_PEFT_MERGED_MODEL_PATH.format(COMMON_OUTPUT_PATHS =rm_common_path)
+    METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=rm_common_path)
 else:  # utilise current run_id
     RM_TRAIN_DATA_PATH = RM_TRAIN_DATA_PATH.format(
         COMMON_OUTPUT_PATHS=common_output_path
@@ -173,8 +174,7 @@ else:  # utilise current run_id
     RM_PEFT_MERGED_MODEL_PATH = RM_PEFT_MERGED_MODEL_PATH.format(
         COMMON_OUTPUT_PATHS=common_output_path
     )
-
-METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=common_output_path)
+    METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=common_output_path)
 
 PRECISION = precision_enumerator(PRECISION_NAME)
 PRECISION
@@ -658,20 +658,12 @@ print("PEFT MODEL:")
 print(peft_model_results)
 
 
-# In[40]:
-
-
-COMMON_OUTPUT_PATHS = COMMON_OUTPUT_PATHS.format(
-    RUN_ID=RM_TRAIN_DATA_RUN_ID if RM_TRAIN_DATA_RUN_ID is not None else RUN_ID
-)
-METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=COMMON_OUTPUT_PATHS)
-
 if not os.path.exists(METRICS_PATH):
     os.makedirs(METRICS_PATH)
 
 data_path = f'{METRICS_PATH}/rl-results.json'
 
-results_dict = {'sft-model': original_model_results, 'rl-model': peft_model_results}
+results_dict = {'sft-model': original_model_results, 'rl-model': peft_model_results, 'n_eval_samples': N_EVAL_SAMPLES}
 
 with open(data_path, 'w') as file:
     json.dump(results_dict, file)
