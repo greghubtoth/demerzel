@@ -37,7 +37,7 @@ from tqdm import tqdm
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
-TESTING = False
+TESTING = True
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
@@ -277,7 +277,7 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(100))
+    dataset["train"] = dataset["train"].select(range(50))
     dataset["test"] = dataset["test"].select(range(30))
     dataset["validation"] = dataset["validation"].select(
         range(50)
