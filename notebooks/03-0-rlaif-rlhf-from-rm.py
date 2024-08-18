@@ -37,7 +37,7 @@ from tqdm import tqdm
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
-TESTING = False
+TESTING = True
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
