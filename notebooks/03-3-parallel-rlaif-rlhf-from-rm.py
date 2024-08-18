@@ -41,10 +41,10 @@ TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
-CHOSEN_MODEL = "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
+CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit" #  "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
-RUN_ID = "be140fa23e9e4452a7801060e9e7d6ba"  # SFT MODEL # uuid.uuid4().hex
+RUN_ID = "ae517069e3734bb4884dfa7fed5db18f"  # SFT MODEL # uuid.uuid4().hex
 
 LORA_PARAM_TARGET_MODULES = {
     "bigscience/mt0-small": ["q", "v"],
@@ -80,7 +80,7 @@ LORA_PARAM_TARGET_MODULES = {
 # ]
 # RM_TRAIN_BATCH_SIZE = 5
 # RM_LEARNING_RATE = 5e-5
-RM_TRAIN_DATA_RUN_ID = "bbea9d66b20148a29fa41ff1cc586558"
+RM_TRAIN_DATA_RUN_ID = "585d151917414404a64459e00eb4f3fa"
 print(f"RM_TRAIN_DATA_RUN_ID: {RM_TRAIN_DATA_RUN_ID}")
 
 RL_LORA_PARAM_R = 16
@@ -341,13 +341,19 @@ ppo_model  # .to(torch.device(DEVICE))
 
 def tokenize_for_rl(sample):
     # Wrap each dialogue with the instruction.
-    prompt = f"""
-Summarize the following reddit post.
+    #     prompt = f"""
+    # Summarize the following reddit post.
+    #
+    # {sample["post"]}
+    #
+    # Summary:
+    # """
+    prompt = f"""{BOS_USER_TOKEN}
+Summarize the following reddit post:
+{sample["post"]}{EOS_TOKEN}
 
-{sample["post"]}
-
-Summary:
-"""
+{BOS_ASSISTANT_TOKEN}
+Summary: """
     sample["input_ids"] = tokenizer.encode(prompt)
     # sample['countThis'] = tokenizer.encode(sample['summary'])
     # Requirement for PPO library.
