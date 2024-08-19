@@ -34,7 +34,7 @@ from trl.core import LengthSampler
 import uuid
 from tqdm import tqdm
 
-# from unsloth import FastLanguageModel
+from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
 TESTING = True
@@ -278,7 +278,7 @@ dataset
 
 if TESTING is True:
     dataset["train"] = dataset["train"].select(range(50))
-    dataset["test"] = dataset["test"].select(range(30))
+    dataset["test"] = dataset["test"].select(range(5))
     dataset["validation"] = dataset["validation"].select(
         range(50)
     )
@@ -460,9 +460,11 @@ stats_to_log = {KL_DIVERGENCE: [], ADVANTAGES_MEAN: [], RETURNS_MEAN: []}
 preferred_summary_index = 0
 
 generation_kwargs = {
-    "min_length": 5,
+    # "min_length": 5,
     "temperature": 0.6,
-    "do_sample": False,
+    "do_sample": True,
+    "min_length": -1,
+    "eos_token_id": -1,
 }  # "top_k": 0.0, "top_p": 1.0 # "do_sample": True
 
 reward_kwargs = {
