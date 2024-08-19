@@ -88,7 +88,7 @@ RL_LORA_PARAM_ALPHA = 16
 RL_LORA_PARAM_TARGET_MODULES = LORA_PARAM_TARGET_MODULES[CHOSEN_MODEL]
 RL_TRAIN_BATCH_SIZE = 8
 RL_TRAIN_MINI_BATCH_SIZE = 2
-RL_LEARNING_RATE = 1.41e-5
+RL_LEARNING_RATE = 1.41e-7
 RL_N_EPOCHS = 1
 
 
@@ -460,9 +460,11 @@ stats_to_log = {KL_DIVERGENCE: [], ADVANTAGES_MEAN: [], RETURNS_MEAN: []}
 preferred_summary_index = 0
 
 generation_kwargs = {
-    "min_length": 5,
-    "temperature": 0.6,
-    "do_sample": False,
+    "min_length": -1,
+    "top_k": 0.0,
+    "top_p": 1.0,
+    "do_sample": True,
+    "eos_token_id": tokenizer.eos_token_id,
 }  # "top_k": 0.0, "top_p": 1.0 # "do_sample": True
 
 reward_kwargs = {
