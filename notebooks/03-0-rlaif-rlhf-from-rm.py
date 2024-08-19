@@ -34,7 +34,7 @@ from trl.core import LengthSampler
 import uuid
 from tqdm import tqdm
 
-from unsloth import FastLanguageModel
+# from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
 
 TESTING = True
@@ -460,12 +460,12 @@ stats_to_log = {KL_DIVERGENCE: [], ADVANTAGES_MEAN: [], RETURNS_MEAN: []}
 preferred_summary_index = 0
 
 generation_kwargs = {
-    # "min_length": 5,
-    "temperature": 0.6,
-    "do_sample": True,
     "min_length": -1,
+    "top_k": 0.0,
+    "top_p": 1.0,
+    "do_sample": True,
     "eos_token_id": tokenizer.eos_token_id,
-}  # "top_k": 0.0, "top_p": 1.0 # "do_sample": True
+}
 
 reward_kwargs = {
     "top_k": None,  # Return all scores.
