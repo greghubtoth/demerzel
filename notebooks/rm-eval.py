@@ -193,19 +193,6 @@ rm_model = AutoModelForSequenceClassification.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, device_map="auto")  # QWEN_EOS
 
 
-# In[37]:
-
-
-# telemetry_dict['human-baseline-answers'] = human_baseline_answer
-# telemetry_dict['ppo-model-answers'] = peft_checkpoint_generation
-# telemetry_dict['sft-model-answers'] = baseline_model_generation
-
-# telemetry_dict['ppo-model-answers']
-
-
-# In[50]:
-
-
 from typing import List
 
 import torch
