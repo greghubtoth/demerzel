@@ -90,12 +90,12 @@ if USE_QWEN is True:
     tokenizer = AutoTokenizer.from_pretrained(SFT_PEFT_ADAPTER_PATH, padding_side='left')
     dataset = load_from_disk(SFT_DATA_OUTPUT_PATH)
     dataset = dataset.filter(lambda example, index: index % 10 == 0, with_indices=True)
-    
+    EOS_TOKEN = tokenizer.eos_token
     N_EVAL_SAMPLES = int(len(dataset['test']) * 1)
     print(N_EVAL_SAMPLES)
     start = time.time()
     prompt = f"""{BOS_USER_TOKEN}
-Summarize the following reddit post: """ + "{x_sample}" + """
+Summarize the following reddit post: """ + "{x_sample}" + f"""
 {EOS_TOKEN}
 {BOS_ASSISTANT_TOKEN}
 Summary: """
@@ -164,9 +164,7 @@ dataset_dict = datasets.DatasetDict(conversion_dataset_dict)
 
 
 rm_model = AutoModelForSequenceClassification.from_pretrained(RM_PEFT_MERGED_MODEL_PATH, device_map="auto")
-tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, device_map="auto")
-
-EOS_TOKEN = tokenizer.eos_token  # QWEN_EOS
+tokenizer = AutoTokenizer.from_pretrained(CHOSEN_MODEL, device_map="auto")  # QWEN_EOS
 
 
 
