@@ -35,7 +35,7 @@ parser.add_argument("rm_run_id", type=str, help="display a square of a given num
 args = parser.parse_args()
 
 
-TESTING = True
+TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
