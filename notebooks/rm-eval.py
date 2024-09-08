@@ -11,7 +11,6 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Bits
 from datasets import load_from_disk
 import pandas as pd
 import numpy as np
-from nyx.evaluation import quantitative_comparison
 import torch
 
 path = Path.cwd().parent.absolute()
@@ -19,6 +18,7 @@ nyx_path = f'{path}/'
 print(nyx_path)
 sys.path.append(nyx_path)
 
+from nyx.evaluation import quantitative_comparison
 from nyx.constants import (COMMON_OUTPUT_PATHS, METRICS_PATH,
                            RM_PEFT_ADAPTER_PATH, RM_PEFT_MERGED_MODEL_PATH, RL_PEFT_ADAPTER_PATH, SFT_DATA_OUTPUT_PATH, SFT_PEFT_ADAPTER_PATH)
 from nyx.data_generation.prompts.model_specific_tokens import (QWEN_BOS_ASSISTANT, QWEN_BOS_USER)
