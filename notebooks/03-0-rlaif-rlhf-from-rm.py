@@ -324,12 +324,12 @@ ppo_model  # .to(torch.device(DEVICE))
 
 def tokenize_for_rl(sample):
     # Wrap each dialogue with the instruction.
-#     prompt = f"""{BOS_USER_TOKEN}
-# Summarize the following reddit post:
-# {sample["post"]}{EOS_TOKEN}
-#
-# {BOS_ASSISTANT_TOKEN}
-# Summary: """
+    #     prompt = f"""{BOS_USER_TOKEN}
+    # Summarize the following reddit post:
+    # {sample["post"]}{EOS_TOKEN}
+    #
+    # {BOS_ASSISTANT_TOKEN}
+    # Summary: """
     prompt = f"""
     Summarize the following reddit post:
     {sample["post"]}
