@@ -40,7 +40,7 @@ USE_QWEN = args.use_qwen
 
 QWEN_SFT_MODEL_ID = 'ae517069e3734bb4884dfa7fed5db18f'
 CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit" if USE_QWEN is True else "microsoft/phi-1_5"
-DEVICE = 'auto'
+DEVICE = 'cuda'
 
 
 # In[25]:
