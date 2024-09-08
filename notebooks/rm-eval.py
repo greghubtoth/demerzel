@@ -26,6 +26,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("rm_run_id",
                     type=str,
                     help="RM runId to evaluate the RL generations with.")
+parser.add_argument("batch_size",
+                    type=int,
+                    help="batch size for evaluation")
 parser.add_argument("--use_qwen", action="store_true",
                     help="Evaluate qwen-7b if true otherwise phi-1-5")
 args = parser.parse_args()
@@ -33,6 +36,7 @@ args = parser.parse_args()
 
 RM_TRAIN_DATA_RUN_ID = args.rm_run_id
 USE_QWEN = args.use_qwen
+BATCH_SIZE = args.batch_size
 
 # RM_TRAIN_DATA_RUN_ID = "c745c16cb14147649de39c37c90db8f5"
 # USE_QWEN = False
@@ -190,7 +194,7 @@ rm_model.config.pad_token = tokenizer.pad_token
 
 
 def get_rl_generation_rewards(
-    col: str, rm_model_to_evaluate=rm_model, batch_size: int = 2
+    col: str, rm_model_to_evaluate=rm_model, batch_size: int = BATCH_SIZE
 ) -> List[List[str]]:
     rewards_list = []
 
