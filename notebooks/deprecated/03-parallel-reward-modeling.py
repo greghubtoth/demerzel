@@ -235,20 +235,20 @@ BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT
 
 
 def create_summary_cols(example):
-#     example[
-#         'summary_prompts_1'
-#     ] = f'''{BOS_USER_TOKEN}
-# Summarize the following reddit post:
-# {example["post"]}{EOS_TOKEN}
-# {BOS_ASSISTANT_TOKEN}
-# Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
-#     example[
-#         'summary_prompts_2'
-#     ] = f'''{BOS_USER_TOKEN}
-# Summarize the following reddit post:
-# {example["post"]}{EOS_TOKEN}
-# {BOS_ASSISTANT_TOKEN}
-# Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
+    #     example[
+    #         'summary_prompts_1'
+    #     ] = f'''{BOS_USER_TOKEN}
+    # Summarize the following reddit post:
+    # {example["post"]}{EOS_TOKEN}
+    # {BOS_ASSISTANT_TOKEN}
+    # Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
+    #     example[
+    #         'summary_prompts_2'
+    #     ] = f'''{BOS_USER_TOKEN}
+    # Summarize the following reddit post:
+    # {example["post"]}{EOS_TOKEN}
+    # {BOS_ASSISTANT_TOKEN}
+    # Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
     example[
         'summary_prompts_1'
     ] = f'''Summarize the following reddit post:
@@ -269,6 +269,7 @@ comparison_train_dataset = comparison_train_dataset.map(create_summary_cols)
 
 HF_BASELINE_RUN = False
 print(f'HF_BASELINE_RUN: {HF_BASELINE_RUN}')
+
 
 def prepare_for_reward_modelling(example, hf_baseline: bool = HF_BASELINE_RUN):
     choice_column = example["choice"] if hf_baseline is True else example["ai_choice"]

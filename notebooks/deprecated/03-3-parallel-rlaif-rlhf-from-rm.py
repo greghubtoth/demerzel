@@ -2,37 +2,26 @@
 # coding: utf-8
 
 
-import time
 import json
 import os
-import torch
-from peft import LoraConfig, TaskType, get_peft_model, PeftConfig
-from trl import RewardConfig, RewardTrainer
+import time
+import uuid
 from typing import List
+
+import evaluate
 import numpy as np
 import pandas as pd
-import evaluate
-
-from transformers import (
-    AutoModelForSeq2SeqLM,
-    AutoModelForCausalLM,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline,
-    BitsAndBytesConfig
-)
+import torch
 from datasets import load_from_disk
-
-from trl import (
-    PPOTrainer,
-    PPOConfig,
-    AutoModelForSeq2SeqLMWithValueHead,
-    AutoModelForCausalLMWithValueHead,
-)
-from trl import create_reference_model
-from trl.core import LengthSampler
-import uuid
+from peft import LoraConfig, PeftConfig, TaskType, get_peft_model
 from tqdm import tqdm
+from transformers import (AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+                          AutoModelForSequenceClassification, AutoTokenizer,
+                          BitsAndBytesConfig, pipeline)
+from trl import (AutoModelForCausalLMWithValueHead,
+                 AutoModelForSeq2SeqLMWithValueHead, PPOConfig, PPOTrainer,
+                 RewardConfig, RewardTrainer, create_reference_model)
+from trl.core import LengthSampler
 
 # from unsloth import FastLanguageModel
 # from unsloth import is_bfloat16_supported
@@ -41,7 +30,7 @@ TESTING = False
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
-CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit" #  "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
+CHOSEN_MODEL = "unsloth/Qwen2-7B-Instruct-bnb-4bit"  #  "microsoft/phi-1_5"  # "Qwen/Qwen2-7B-Instruct"
 # "microsoft/phi-1_5" #"bigscience/mt0-small" # "google/flan-t5-large" "stabilityai/stablelm-2-zephyr-1_6b"
 RANDOM_SEED = 42
 RUN_ID = "ae517069e3734bb4884dfa7fed5db18f"  # SFT MODEL # uuid.uuid4().hex
@@ -107,35 +96,20 @@ sys.path.append(nyx_path)
 # In[4]:
 
 
-from nyx.evaluation import quantitative_comparison
+from nyx.constants import (ADVANTAGES_MEAN, COMMON_OUTPUT_PATHS,
+                           COMPARISON_DATA_PATH, KL_DIVERGENCE, METRICS_PATH,
+                           RETURNS_MEAN, RL_OUTPUT_DIR, RL_PEFT_ADAPTER_PATH,
+                           RL_PEFT_MERGED_MODEL_PATH, RM_OUTPUT_DIR,
+                           RM_PEFT_ADAPTER_PATH, RM_PEFT_MERGED_MODEL_PATH,
+                           RM_TRAIN_DATA_PATH, SFT_DATA_OUTPUT_PATH,
+                           SFT_PEFT_ADAPTER_PATH, SFT_PEFT_MERGED_MODEL_PATH)
 from nyx.data_generation.evaluators import AILabelEvaluator
-
-from nyx.utils import (
-    precision_enumerator,
-    print_number_of_trainable_model_parameters,
-    get_task_type,
-    round_dictionary_values,
-)
-from nyx.constants import (
-    COMPARISON_DATA_PATH,
-    SFT_DATA_OUTPUT_PATH,
-    COMMON_OUTPUT_PATHS,
-    SFT_PEFT_MERGED_MODEL_PATH,
-    SFT_PEFT_ADAPTER_PATH,
-    RM_TRAIN_DATA_PATH,
-    RM_OUTPUT_DIR,
-    RM_PEFT_ADAPTER_PATH,
-    RM_PEFT_MERGED_MODEL_PATH,
-    METRICS_PATH,
-    RL_OUTPUT_DIR,
-    RL_PEFT_ADAPTER_PATH,
-    RL_PEFT_MERGED_MODEL_PATH, KL_DIVERGENCE, ADVANTAGES_MEAN, RETURNS_MEAN,
-)
 from nyx.data_generation.prompts.model_specific_tokens import (
-    QWEN_EOS,
-    QWEN_BOS_USER,
-    QWEN_BOS_ASSISTANT,
-)
+    QWEN_BOS_ASSISTANT, QWEN_BOS_USER, QWEN_EOS)
+from nyx.evaluation import quantitative_comparison
+from nyx.utils import (get_task_type, precision_enumerator,
+                       print_number_of_trainable_model_parameters,
+                       round_dictionary_values)
 
 common_output_path = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
 
@@ -145,7 +119,6 @@ SFT_PEFT_ADAPTER_PATH = SFT_PEFT_ADAPTER_PATH.format(
 SFT_PEFT_MERGED_MODEL_PATH = SFT_PEFT_MERGED_MODEL_PATH.format(
     COMMON_OUTPUT_PATHS=common_output_path
 )
-
 
 
 # if generated data from a different run needs to be utilised.
@@ -160,8 +133,12 @@ if RM_TRAIN_DATA_RUN_ID is not None:
         COMMON_OUTPUT_PATHS=rm_common_path
     )
     RL_OUTPUT_DIR = RL_OUTPUT_DIR.format(COMMON_OUTPUT_PATHS=rm_common_path)
-    RL_PEFT_ADAPTER_PATH = RL_PEFT_ADAPTER_PATH.format(COMMON_OUTPUT_PATHS=rm_common_path)
-    RL_PEFT_MERGED_MODEL_PATH = RL_PEFT_MERGED_MODEL_PATH.format(COMMON_OUTPUT_PATHS =rm_common_path)
+    RL_PEFT_ADAPTER_PATH = RL_PEFT_ADAPTER_PATH.format(
+        COMMON_OUTPUT_PATHS=rm_common_path
+    )
+    RL_PEFT_MERGED_MODEL_PATH = RL_PEFT_MERGED_MODEL_PATH.format(
+        COMMON_OUTPUT_PATHS=rm_common_path
+    )
     METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=rm_common_path)
 else:  # utilise current run_id
     RM_TRAIN_DATA_PATH = RM_TRAIN_DATA_PATH.format(
@@ -206,15 +183,15 @@ bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16
+    bnb_4bit_compute_dtype=torch.float16,
 )
 
-sft_model = AutoModelForCausalLM.from_pretrained( # FastLanguageModel, AutoModelForCausalLM
-    SFT_PEFT_ADAPTER_PATH, #SFT_PEFT_ADAPTER_PATH,  # YOUR MODEL YOU USED FOR TRAINING
+sft_model = AutoModelForCausalLM.from_pretrained(  # FastLanguageModel, AutoModelForCausalLM
+    SFT_PEFT_ADAPTER_PATH,  # SFT_PEFT_ADAPTER_PATH,  # YOUR MODEL YOU USED FOR TRAINING
     # max_seq_length=max_seq_length,
     # dtype=dtype,
     # load_in_4bit=load_in_4bit,
-    quantization_config=bnb_config
+    quantization_config=bnb_config,
 )
 tokenizer = AutoTokenizer.from_pretrained(SFT_PEFT_ADAPTER_PATH, padding_side='left')
 tokenizer.pad_token = (
@@ -249,11 +226,12 @@ RM_PEFT_ADAPTER_PATH
 
 # Merging and saving the model which is trained all the way (i.e., utilising all of the data).
 from peft import AutoPeftModelForSequenceClassification
+
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16
+    bnb_4bit_compute_dtype=torch.float16,
 )
 
 merged_rm_model = AutoPeftModelForSequenceClassification.from_pretrained(
@@ -280,13 +258,9 @@ dataset
 if TESTING is True:
     dataset["train"] = dataset["train"].select(range(100))
     dataset["test"] = dataset["test"].select(range(30))
-    dataset["validation"] = dataset["validation"].select(
-        range(50)
-    )
+    dataset["validation"] = dataset["validation"].select(range(50))
 else:
-    dataset = dataset.filter(
-        lambda example, index: index % 10 == 0, with_indices=True
-    )
+    dataset = dataset.filter(lambda example, index: index % 10 == 0, with_indices=True)
 dataset
 
 
@@ -321,7 +295,7 @@ bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16
+    bnb_4bit_compute_dtype=torch.float16,
 )
 
 ppo_model = loading_class.from_pretrained(
@@ -614,7 +588,7 @@ print(
     f"Evaluating N={N_EVAL_SAMPLES} samples took {round(duration, 2)} seconds to execute."
 )
 
-human_baseline_answer = dataset["test"][0: N_EVAL_SAMPLES]["summary"]
+human_baseline_answer = dataset["test"][0:N_EVAL_SAMPLES]["summary"]
 
 zipped_summaries = list(
     zip(human_baseline_answer, peft_checkpoint_generation, baseline_model_generation)
@@ -675,9 +649,17 @@ print(peft_model_results)
 if not os.path.exists(METRICS_PATH):
     os.makedirs(METRICS_PATH)
 
-data_path = f'{METRICS_PATH}/phi-1-5-rl-results.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-rl-results.json'
+data_path = (
+    f'{METRICS_PATH}/phi-1-5-rl-results.json'
+    if CHOSEN_MODEL == "microsoft/phi-1_5"
+    else f'{METRICS_PATH}/qwen2-7b-rl-results.json'
+)
 
-results_dict = {'sft-model': original_model_results, 'rl-model': peft_model_results, 'n_eval_samples': N_EVAL_SAMPLES}
+results_dict = {
+    'sft-model': original_model_results,
+    'rl-model': peft_model_results,
+    'n_eval_samples': N_EVAL_SAMPLES,
+}
 
 with open(data_path, 'w') as file:
     json.dump(results_dict, file)
@@ -711,7 +693,11 @@ results_dict = {
     'RL_MAX_PPO_STEPS': max_ppo_steps,
 }
 
-config_data_path = f'{METRICS_PATH}/phi-1-5-rl-config.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-rl-config.json'
+config_data_path = (
+    f'{METRICS_PATH}/phi-1-5-rl-config.json'
+    if CHOSEN_MODEL == "microsoft/phi-1_5"
+    else f'{METRICS_PATH}/qwen2-7b-rl-config.json'
+)
 with open(config_data_path, 'w') as file:
     json.dump(results_dict, file)
 
@@ -721,7 +707,11 @@ stats_to_log['human-baseline-answers'] = human_baseline_answer
 stats_to_log['ppo-model-answers'] = peft_checkpoint_generation
 stats_to_log['sft-model-answers'] = baseline_model_generation
 
-telemetry_data_path = f'{METRICS_PATH}/phi-1-5-ppo-telemetry.json' if CHOSEN_MODEL == "microsoft/phi-1_5" else f'{METRICS_PATH}/qwen2-7b-ppo-telemetry.json'
+telemetry_data_path = (
+    f'{METRICS_PATH}/phi-1-5-ppo-telemetry.json'
+    if CHOSEN_MODEL == "microsoft/phi-1_5"
+    else f'{METRICS_PATH}/qwen2-7b-ppo-telemetry.json'
+)
 with open(telemetry_data_path, 'w') as file:
     json.dump(stats_to_log, file)
 

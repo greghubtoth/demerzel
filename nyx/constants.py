@@ -36,7 +36,9 @@ RETURNS_MEAN = 'returns-mean'
 # Reward Modelling paths
 RM_TRAIN_DATA_PATH = "{COMMON_OUTPUT_PATHS}/data/labelled-train-data"
 RM_OUTPUT_DIR = "{COMMON_OUTPUT_PATHS}/models/reward-modelling/events"
-RL_OUTPUT_DIR = "{COMMON_OUTPUT_PATHS}/models/reinforcement-learning/peft-checkpoint-local"
+RL_OUTPUT_DIR = (
+    "{COMMON_OUTPUT_PATHS}/models/reinforcement-learning/peft-checkpoint-local"
+)
 
 RM_PEFT_ADAPTER_PATH = (
     "{COMMON_OUTPUT_PATHS}/models/reward-modelling/peft-checkpoint-local"

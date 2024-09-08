@@ -235,20 +235,20 @@ BOS_ASSISTANT_TOKEN = QWEN_BOS_ASSISTANT
 
 
 def create_summary_cols(example):
-#     example[
-#         'summary_prompts_1'
-#     ] = f'''{BOS_USER_TOKEN}
-# Summarize the following reddit post:
-# {example["post"]}{EOS_TOKEN}
-# {BOS_ASSISTANT_TOKEN}
-# Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
-#     example[
-#         'summary_prompts_2'
-#     ] = f'''{BOS_USER_TOKEN}
-# Summarize the following reddit post:
-# {example["post"]}{EOS_TOKEN}
-# {BOS_ASSISTANT_TOKEN}
-# Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
+    #     example[
+    #         'summary_prompts_1'
+    #     ] = f'''{BOS_USER_TOKEN}
+    # Summarize the following reddit post:
+    # {example["post"]}{EOS_TOKEN}
+    # {BOS_ASSISTANT_TOKEN}
+    # Summary: {example["candidate_summary_1"]}{EOS_TOKEN}'''
+    #     example[
+    #         'summary_prompts_2'
+    #     ] = f'''{BOS_USER_TOKEN}
+    # Summarize the following reddit post:
+    # {example["post"]}{EOS_TOKEN}
+    # {BOS_ASSISTANT_TOKEN}
+    # Summary: {example["candidate_summary_2"]}{EOS_TOKEN}'''
     example[
         'summary_prompts_1'
     ] = f'''Summarize the following reddit post:
