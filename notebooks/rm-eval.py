@@ -138,7 +138,12 @@ Summary: """
         prompt=prompt,
     )
     end = time.time()
+    duration = end - start
+    print(
+        f"Evaluating N={N_EVAL_SAMPLES} samples took {round(duration, 2)} seconds to execute."
+    )
     human_baseline_answer = dataset["test"][0:N_EVAL_SAMPLES]["summary"]
+
 else:
     prompt = (
         f"""Summarize the following reddit post: 
