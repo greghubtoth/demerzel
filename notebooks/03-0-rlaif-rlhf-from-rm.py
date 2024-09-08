@@ -35,7 +35,7 @@ parser.add_argument("rm_run_id", type=str, help="display a square of a given num
 args = parser.parse_args()
 
 
-TESTING = False
+TESTING = True
 
 PRECISION_NAME = 'float16'
 DEVICE = "cuda"
@@ -265,8 +265,8 @@ dataset
 
 
 if TESTING is True:
-    dataset["train"] = dataset["train"].select(range(50))
-    dataset["test"] = dataset["test"].select(range(5))
+    dataset["train"] = dataset["train"].select(range(200))
+    dataset["test"] = dataset["test"].select(range(30))
     dataset["validation"] = dataset["validation"].select(range(50))
 else:
     dataset = dataset.filter(lambda example, index: index % 10 == 0, with_indices=True)
@@ -324,19 +324,18 @@ ppo_model  # .to(torch.device(DEVICE))
 
 def tokenize_for_rl(sample):
     # Wrap each dialogue with the instruction.
-    prompt = f"""{BOS_USER_TOKEN}
-Summarize the following reddit post:
-{sample["post"]}{EOS_TOKEN}
+#     prompt = f"""{BOS_USER_TOKEN}
+# Summarize the following reddit post:
+# {sample["post"]}{EOS_TOKEN}
+#
+# {BOS_ASSISTANT_TOKEN}
+# Summary: """
+    prompt = f"""
+    Summarize the following reddit post:
+    {sample["post"]}
 
-{BOS_ASSISTANT_TOKEN}
-Summary: """
-    #     prompt = f"""
-    # Summarize the following reddit post.
-    #
-    # {sample["post"]}
-    #
-    # Summary:
-    # """
+    Summary:
+    """
 
     sample["input_ids"] = tokenizer.encode(prompt)
     # sample['countThis'] = tokenizer.encode(sample['summary'])
