@@ -174,8 +174,8 @@ conversion_dataset_dict = {}
 pd_df = pd.DataFrame.from_dict(
     {
         'human-baseline-answers': human_baseline_summary_prompts,
-        'ppo-model-answers': telemetry_dict['ppo-model-answers'],
-        'sft-model-answers': telemetry_dict['sft-model-answers'],
+        'ppo-model-answers': peft_checkpoint_generation,
+        'sft-model-answers': baseline_model_generation,
     }
 )
 conversion_dataset_dict['rm_test'] = datasets.Dataset.from_pandas(pd_df)
