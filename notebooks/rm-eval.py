@@ -108,7 +108,7 @@ Summary: """
         dataset,
         tokenizer,
         n_samples_to_evaluate=N_EVAL_SAMPLES,
-        batch_size=10,
+        batch_size=BATCH_SIZE,
         device=DEVICE,
         prompt=prompt, 
     )
@@ -125,7 +125,7 @@ Summary: """
         dataset,
         tokenizer,
         n_samples_to_evaluate=N_EVAL_SAMPLES,
-        batch_size=10,
+        batch_size=BATCH_SIZE,
         device=DEVICE,
         prompt=prompt
     )
