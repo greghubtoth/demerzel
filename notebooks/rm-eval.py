@@ -215,7 +215,7 @@ def get_rl_generation_rewards(
     # # print(f'probabilities [not hate, hate]: {probabilities}')
 
     # # get the logits for "not hate" - this is the reward!
-    preferred_answer_index = 0
+    preferred_answer_index = 1
     # preferred_reward = (logits[:, preferred_answer_index]).tolist()
     # print(f'reward (high): {preferred_reward}')
 
