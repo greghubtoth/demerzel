@@ -19,9 +19,7 @@ def quantitative_comparison(
     prompt = (
         prompt
         if prompt is not None
-        else """
-    Summarize the following reddit post.
-
+        else """Summarize the following reddit post:
     {x_sample}
 
     Summary: """
