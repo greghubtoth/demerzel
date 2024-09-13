@@ -11,7 +11,8 @@ GEMMA_EOS = '<end_of_turn>'
 GEMMA_BOS_USER = '<bos><start_of_turn>user'
 GEMMA_BOS_ASSISTANT = '<start_of_turn>model'
 
+CLAUDE_EVAL = ''
 # The generations will use the below suggested tokens, can be set to '' to disable, e.g. for mt0 models.
-EOS_TOKEN = GEMMA_EOS
-BOS_USER_TOKEN = GEMMA_BOS_USER
-BOS_ASSISTANT_TOKEN = GEMMA_BOS_ASSISTANT
+EOS_TOKEN = CLAUDE_EVAL
+BOS_USER_TOKEN = CLAUDE_EVAL
+BOS_ASSISTANT_TOKEN = CLAUDE_EVAL
