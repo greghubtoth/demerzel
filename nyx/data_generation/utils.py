@@ -19,13 +19,17 @@ from nyx.constants import CANDIDATE_COL, POST_COL, PROMPTS_COL
 from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
                                          TASK_WITH_COT_LEE_ET_AL)
 from nyx.data_generation.prompts.insights import (
-    ALL_SUCCESSES_INSIGHTS_TEMPLATE, FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE)
+    ALL_SUCCESSES_INSIGHTS_TEMPLATE,
+    FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE,
+)
 from nyx.data_generation.prompts.model_specific_tokens import (
     BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
-    COT_EXAMPLE, INSIGHTS, RATIONALES_SPLIT_STRING, RETRIEVED_EXAMPLE_TEMPLATE)
-from nyx.data_generation.prompts.reflection import \
-    SUMMARISATION_REFLEXION_PROMPT
+    COT_EXAMPLE,
+    INSIGHTS,
+   RATIONALES_SPLIT_STRING, RETRIEVED_EXAMPLE_TEMPLATE,
+)
+from nyx.data_generation.prompts.reflection import SUMMARISATION_REFLEXION_PROMPT
 
 
 @deprecated(
@@ -125,7 +129,7 @@ def calculate_target_token_probabilities(
     # Get model predictions for the next token
     prediction_params = (
         dict(input_ids=encoded_text.input_ids)
-        if 'causal' in original_model.config.architectures[0].lower()
+        if "causal" in original_model.config.architectures[0].lower()
         else dict(
             input_ids=encoded_text.input_ids,
             decoder_input_ids=original_model._shift_right(encoded_text.input_ids),
@@ -208,7 +212,7 @@ def generate_ai_labels_for_data(
                         max_new_tokens=max_new_tokens,
                         pad_token_id=tokeniser.pad_token_id,
                     )
-                    if 'causal' in original_model.config.architectures[0].lower()
+                    if "causal" in original_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
                 ),
             )
@@ -230,7 +234,7 @@ def generate_ai_labels_for_data(
             # truncation=True,
             return_tensors="pt",
         ).to(torch.device(device))
-        print('Probabilities being calculated.')
+        print("Probabilities being calculated.")
         summary_predictions = calculate_target_token_probabilities(
             original_model=original_model,
             tokeniser=tokeniser,
@@ -336,7 +340,7 @@ def calculate_target_token_probabilities_with_gpus(
             single_batch = single_batch.to(distributed_state.device)
             prediction_params = (
                 single_batch
-                if 'causal' in original_model.config.architectures[0].lower()
+                if "causal" in original_model.config.architectures[0].lower()
                 else dict(
                     **single_batch,
                     decoder_input_ids=original_model._shift_right(
@@ -369,8 +373,8 @@ def calculate_target_token_probabilities_with_gpus(
     collected_predictions_1 = gather_object(predictions_target_1)
     collected_predictions_2 = gather_object(predictions_target_2)
     # distributed_state.print(
-    #     f'length of encoded_texts: {len(encoded_text)}, collected_predictions_1:'
-    #     f' {len(collected_predictions_1)} collected_predictions_2: {len(collected_predictions_2)}'
+    #     f"length of encoded_texts: {len(encoded_text)}, collected_predictions_1:"
+    #     f" {len(collected_predictions_1)} collected_predictions_2: {len(collected_predictions_2)}"
     # )
 
     return [collected_predictions_1, collected_predictions_2]
@@ -511,7 +515,7 @@ def generate_tokens_with_gpus(
         GenerationConfig(
             max_new_tokens=max_new_tokens, pad_token_id=tokeniser.pad_token_id
         )
-        if 'causal' in labeller_model.config.architectures[0].lower()
+        if "causal" in labeller_model.config.architectures[0].lower()
         else GenerationConfig(max_new_tokens=max_new_tokens)
     )
     with distributed_state.split_between_processes(
@@ -542,6 +546,204 @@ def generate_tokens_with_gpus(
     return model_completions
 
 
+def assemble_cot_prompt_with_langchain(
+    dataset,
+    reverse,
+):
+    """To get the prompts copy the following:
+    >>> prompts = [prompt.text for prompt in prompt_chain.batch(list_of_dict_dataset)]
+    """
+    # batch_size = batch_size * 2
+    template = OPENAI_PREAMBLE + TASK_WITH_COT_LEE_ET_AL
+    prompt_template = PromptTemplate.from_template(template)
+
+    # This chain only assembles the prompts
+    rationale_prompt_chain = {
+                                 "text": itemgetter(POST_COL),
+                                 "summary1": (
+                                     itemgetter(f"{CANDIDATE_COL}_2")
+                                     if reverse is True
+                                     else itemgetter(f"{CANDIDATE_COL}_1")
+                                 ),
+                                 "summary2": (
+                                     itemgetter(f"{CANDIDATE_COL}_1")
+                                     if reverse is True
+                                     else itemgetter(f"{CANDIDATE_COL}_2")
+                                 ),
+                             } | prompt_template
+    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
+    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
+        data=dataset, requested_cols=requested_cols, data_split="train"
+    )
+    return list_of_dict_dataset, rationale_prompt_chain
+
+
+def assemble_reflexion_prompt_with_langchain(dataset, prompt_col):
+    template = (
+            "{cot_prompt}{predicted_summary}"
+            + f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT.replace('''
+    ''', ' ')}"""
+    )
+    prompt_template = PromptTemplate.from_template(template)
+
+    # This chain only assembles the prompts
+    reflexion_chain = {
+                          "cot_prompt": itemgetter(prompt_col),
+                          "predicted_summary": itemgetter("ai_choice_for_prompt"),
+                      } | prompt_template
+
+    requested_cols = [prompt_col, "ai_choice_for_prompt"]
+    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
+        data=dataset, requested_cols=requested_cols
+    )
+    return list_of_dict_dataset, reflexion_chain
+
+def assemble_reflexion_rationale_prompt_with_langchain(
+    completions
+):
+    """To get the prompts copy the following:
+    >>> prompts = [prompt.text for prompt in prompt_chain.batch(list_of_dict_dataset)]
+    """
+    cot_template = "{previous_attempt}\nRationale:"
+    cot_prompt_template = PromptTemplate.from_template(cot_template)
+    cot_chain = {
+                    "previous_attempt": itemgetter("previous_attempt_with_reflexion"),
+                } | cot_prompt_template
+    cot_with_reflexion_list_of_dict = [
+        {"previous_attempt_with_reflexion": completion} for completion in completions
+    ]
+    return cot_with_reflexion_list_of_dict, cot_chain
+
+def assemble_successful_insights_prompt_with_langchain(
+        dataset,
+        reverse: bool
+):
+    prompt_col = (
+        "reversed_prompt_used_to_predict"
+        if reverse is True
+        else "ordered_prompt_used_to_predict"
+    )
+    prompt_template = PromptTemplate.from_template(ALL_SUCCESSES_INSIGHTS_TEMPLATE)
+
+    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
+        data=dataset, requested_cols=[prompt_col]
+    )
+    # Get only thought, action, observation-s for successful trials, then group them 5 at a time.
+    successes = [
+        element.get(prompt_col).split(RATIONALES_SPLIT_STRING)[1]
+        for element in list_of_dict_dataset
+    ]
+    list_of_dict_dataset = [
+        {"successes": "\n\n".join(successes[i : i + 5])}
+        for i in range(0, len(successes), 5)
+    ]
+    successful_insights_chain = {
+                                    "success_history": itemgetter("successes"),
+                                    "existing_rules": itemgetter("insights"),
+                                } | prompt_template
+
+    return list_of_dict_dataset, successful_insights_chain
+
+
+def assemble_comparison_insights_prompt_with_langchain(dataset, reverse: bool):
+    # Get only thought, action, observation-s for successful trials, then group them 5 at a time.
+    prompt_col = (
+        "reversed_prompt_used_to_predict"
+        if reverse is True
+        else "ordered_prompt_used_to_predict"
+    )
+    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2", prompt_col]
+    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
+        data=dataset, requested_cols=requested_cols
+    )
+    for element in list_of_dict_dataset:
+        rationale_action_observation = element.get(prompt_col).split(
+            RATIONALES_SPLIT_STRING
+        )[1]
+        element['success_trajectory'] = rationale_action_observation
+        # Data only makes it into here if it succeeded after failure. So take everything until latest retry to get
+        # failed trajectory.
+        element['fail_trajectory'] = 'Observation'.join(
+            rationale_action_observation.split('Observation')[:-1]
+        )
+
+    # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
+    prompt_template = PromptTemplate.from_template(
+        FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE
+    )
+    task_template = OPENAI_PREAMBLE + TASK_WITH_COT_LEE_ET_AL.split("Rationale:")[0]
+    task_prompt_template = PromptTemplate.from_template(task_template)
+    rationale_prompt_chain = (
+        {
+            "text": itemgetter(POST_COL),
+            "summary1": itemgetter(f"{CANDIDATE_COL}_2"),
+            "summary2": itemgetter(f"{CANDIDATE_COL}_1"),
+        }
+        | task_prompt_template
+        if reverse is True
+        else {
+                 "text": itemgetter(POST_COL),
+                 "summary1": itemgetter(f"{CANDIDATE_COL}_1"),
+                 "summary2": itemgetter(f"{CANDIDATE_COL}_2"),
+             }
+             | task_prompt_template
+    )
+    comparison_insights_chain = {
+                                    "task": rationale_prompt_chain,
+                                    "success_history": itemgetter("success_trajectory"),
+                                    "fail_history": itemgetter("fail_trajectory"),
+                                    "existing_rules": itemgetter("insights"),
+                                } | prompt_template
+
+    return list_of_dict_dataset, comparison_insights_chain
+
+def assemble_cot_with_insights_and_examples_prompt_with_langchain(dataset, reverse: bool, insights: str,
+                                                                  vdb_retriever: VectorStoreRetriever):
+    preamble = OPENAI_PREAMBLE
+    if insights is not None:
+        preamble += INSIGHTS.format(insights=insights)
+    if vdb_retriever is not None:
+        preamble += COT_EXAMPLE
+
+    template = preamble + TASK_WITH_COT_LEE_ET_AL
+    prompt_template = PromptTemplate.from_template(template)
+
+    chain_dict = {
+        "text": itemgetter(POST_COL),
+        "summary1": (
+            itemgetter(f"{CANDIDATE_COL}_2")
+            if reverse is True
+            else itemgetter(f"{CANDIDATE_COL}_1")
+        ),
+        "summary2": (
+            itemgetter(f"{CANDIDATE_COL}_1")
+            if reverse is True
+            else itemgetter(f"{CANDIDATE_COL}_2")
+        ),
+    }
+    # added as constant above.
+    # if insights is not None:
+    #     chain_dict.update({"insights": insights})
+    if vdb_retriever is not None:
+        chain_dict.update(
+            {
+                "example": itemgetter(POST_COL)
+                           | vdb_retriever
+                           | RunnableLambda(get_example_str_from_retrieved_doc)
+            }
+        )
+
+    # This chain only assembles the prompts
+    cot_with_insights_and_examples_chain = chain_dict | prompt_template
+    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
+    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
+        data=dataset,
+        requested_cols=requested_cols,  # data_split='train', called with subset of data.
+    )
+
+    return list_of_dict_dataset, cot_with_insights_and_examples_chain
+
+
 def generate_cot_for_prompts_with_gpus(
     dataset,
     labeller_model,
@@ -557,27 +759,10 @@ def generate_cot_for_prompts_with_gpus(
     ----------
     https://github.com/huggingface/accelerate/blob/main/examples/inference/distributed/phi2.py
     """
-    # batch_size = batch_size * 2
-    template = OPENAI_PREAMBLE + TASK_WITH_COT_LEE_ET_AL
-    prompt_template = PromptTemplate.from_template(template)
-
-    # This chain only assembles the prompts
-    rationale_prompt_chain = {
-        "text": itemgetter(POST_COL),
-        "summary1": (
-            itemgetter(f"{CANDIDATE_COL}_2")
-            if reverse is True
-            else itemgetter(f"{CANDIDATE_COL}_1")
-        ),
-        "summary2": (
-            itemgetter(f"{CANDIDATE_COL}_1")
-            if reverse is True
-            else itemgetter(f"{CANDIDATE_COL}_2")
-        ),
-    } | prompt_template
-    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
-    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=requested_cols, data_split='train'
+    batch_size = batch_size * 2
+    list_of_dict_dataset, rationale_prompt_chain = assemble_cot_prompt_with_langchain(
+        dataset=dataset,
+        reverse=reverse,
     )
 
     rationale_completions = generate_tokens_with_gpus(
@@ -610,24 +795,8 @@ def generate_reflexion_and_cot_completions_with_gpus(
     """
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
     batch_size = batch_size * 2
-    template = (
-        "{cot_prompt}{predicted_summary}"
-        + f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT.replace('''
-''', ' ')}"""
-    )
-    prompt_template = PromptTemplate.from_template(template)
-
-    # This chain only assembles the prompts
-    reflexion_chain = {
-        "cot_prompt": itemgetter(prompt_col),
-        "predicted_summary": itemgetter("ai_choice_for_prompt"),
-    } | prompt_template
-
-    requested_cols = [prompt_col, "ai_choice_for_prompt"]
-    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=requested_cols
-    )
     # computes Observation:
+    list_of_dict_dataset, reflexion_chain = assemble_reflexion_prompt_with_langchain(dataset, prompt_col)
     completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -639,15 +808,8 @@ def generate_reflexion_and_cot_completions_with_gpus(
         max_new_tokens=max_new_tokens,
     )
 
-    cot_template = "{previous_attempt}\nRationale:"
-    cot_prompt_template = PromptTemplate.from_template(cot_template)
-    cot_chain = {
-        "previous_attempt": itemgetter('previous_attempt_with_reflexion'),
-    } | cot_prompt_template
-    cot_with_reflexion_list_of_dict = [
-        {'previous_attempt_with_reflexion': completion} for completion in completions
-    ]
     # computes Rationale:
+    cot_with_reflexion_list_of_dict, cot_chain = assemble_reflexion_rationale_prompt_with_langchain(completions)
     cot_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -690,7 +852,7 @@ def generate_next_token_probabilities_gpus(
     ]
 
     # Re-order the split-between processes here!
-    distributed_state.print('Probabilities being calculated.')
+    distributed_state.print("Probabilities being calculated.")
     probabilities = calculate_target_token_probabilities_with_gpus(
         original_model=model,
         tokeniser=tokeniser,
@@ -724,10 +886,10 @@ def get_example_str_from_retrieved_doc(retrieved_documents: List[Document]) -> s
         [
             RETRIEVED_EXAMPLE_TEMPLATE.format(
                 text=doc.page_content,
-                summary1=doc.metadata.get('summary1'),
-                summary2=doc.metadata.get('summary2'),
+                summary1=doc.metadata.get("summary1"),
+                summary2=doc.metadata.get("summary2"),
                 chain_of_thought=doc.metadata.get("reasoning"),
-                ai_choice=doc.metadata.get('predicted_label'),
+                ai_choice=doc.metadata.get("predicted_label"),
             )
             + f" {doc.metadata.get('end_string')}"
             for doc in retrieved_documents
@@ -735,20 +897,20 @@ def get_example_str_from_retrieved_doc(retrieved_documents: List[Document]) -> s
         if len(retrieved_documents) >= 1
         else []
     )
-    return '\n'.join(relevant_content)
+    return "\n".join(relevant_content)
 
 
 class InsightActions(Enum):
-    edit = 'edit'
-    add = 'add'
-    remove = 'remove'
-    agree = 'agree'
+    edit = "edit"
+    add = "add"
+    remove = "remove"
+    agree = "agree"
 
 
 # def parse_insights_actions(completion: str) -> List[List[str]]:
-#     seperator = 'Do at most 4 operations and each existing rule can only get a maximum of 1 operation.'
-#     insight_actions = completion.split(seperator)[0].split('\n')
-#     insight_actions = [action.strip().split(' ') for action in insight_actions]
+#     seperator = "Do at most 4 operations and each existing rule can only get a maximum of 1 operation."
+#     insight_actions = completion.split(seperator)[0].split("\n")
+#     insight_actions = [action.strip().split(" ") for action in insight_actions]
 #     correctly_parsed_insight_actions = [
 #         action for action in insight_actions if len(action) == 3
 #     ]
@@ -777,9 +939,9 @@ def parse_insights_str_to_dict(insights_str: str) -> Dict[str, str]:
 
 def parse_insights_to_dict(insights: str) -> Dict[str, str]:
     if len(insights) >= 1:
-        insights_list = insights.split('\n')
+        insights_list = insights.split("\n")
         insights_dict = {
-            f'{index}': rule.split(':')[1].strip()
+            f"{index}": rule.split(":")[1].strip()
             for index, rule in enumerate(insights_list)
         }
         return insights_dict
@@ -794,18 +956,18 @@ def update_insights(insight_actions: List[str], insights: str) -> str:
     insights_dict = parse_insights_str_to_dict(insights)
     # ADD <NEW RULE NUMBER>: <NEW RULE>
     for action, rule_number, rule in correctly_parsed_insight_actions:
-        # rule_number = rule_number.split(':')[0].strip()
+        # rule_number = rule_number.split(":")[0].strip()
         if action == InsightActions.edit.value or action == InsightActions.add.value:
             # print(f'\n\n\nadding or editing insight {rule_number}')
             insights_dict[rule_number] = rule
         elif action == InsightActions.remove.value:
             insights_dict.pop(rule_number, None)
 
-    insights_str = ''
+    insights_str = ""
     # Ensuring only unique insights are kept.
     insights_list = sorted(set([i.strip() for i in list(insights_dict.values())]))
     for index, rule in enumerate(insights_list, start=1):
-        insights_str += f'{index}: {rule}\n'
+        insights_str += f"{index}: {rule}\n"
     return insights_str
 
 
@@ -827,32 +989,11 @@ def generate_insights_successful(
     A good summarisation labeling task is ~70% accurate.
     So this method O(7N/50) slow."""
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
-    prompt_col = (
-        'reversed_prompt_used_to_predict'
-        if reverse is True
-        else 'ordered_prompt_used_to_predict'
-    )
-    prompt_template = PromptTemplate.from_template(ALL_SUCCESSES_INSIGHTS_TEMPLATE)
-
-    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=[prompt_col]
-    )
-    # Get only thought, action, observation-s for successful trials, then group them 5 at a time.
-    successes = [
-        element.get(prompt_col).split(RATIONALES_SPLIT_STRING)[1]
-        for element in list_of_dict_dataset
-    ]
-    list_of_dict_dataset = [
-        {"successes": "\n\n".join(successes[i : i + 5])}
-        for i in range(0, len(successes), 5)
-    ]
-    successful_insights_chain = {
-        "success_history": itemgetter("successes"),
-        "existing_rules": itemgetter("insights"),
-    } | prompt_template
+    (list_of_dict_dataset,
+     successful_insights_chain) = assemble_successful_insights_prompt_with_langchain(dataset=dataset,reverse=reverse)
 
     for prompt in list_of_dict_dataset:
-        prompt['insights'] = insights
+        prompt["insights"] = insights
         template = successful_insights_chain.invoke(prompt)
         # distributed_state.print(f'successful insights template: {template}, {type(template)}')
         # distributed_state.print(f'successful insights template: {template.text}, prompt: {prompt}, {type(prompt)}')
@@ -872,7 +1013,7 @@ def generate_insights_successful(
                         max_new_tokens=max_new_tokens,
                         pad_token_id=tokeniser.pad_token_id,
                     )
-                    if 'causal' in labeller_model.config.architectures[0].lower()
+                    if "causal" in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
                 ),
             )
@@ -911,57 +1052,11 @@ def generate_insights_with_comparisons(
     Will need to quantify how often this occurs.
     But it should be a subset of the 30% of exercises."""
 
-    # Get only thought, action, observation-s for successful trials, then group them 5 at a time.
-    prompt_col = (
-        'reversed_prompt_used_to_predict'
-        if reverse is True
-        else 'ordered_prompt_used_to_predict'
-    )
-    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2", prompt_col]
-    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset, requested_cols=requested_cols
-    )
-    for element in list_of_dict_dataset:
-        rationale_action_observation = element.get(prompt_col).split(
-            RATIONALES_SPLIT_STRING
-        )[1]
-        element['success_trajectory'] = rationale_action_observation
-        # Data only makes it into here if it succeeded after failure. So take everything until latest retry to get
-        # failed trajectory.
-        element['fail_trajectory'] = 'Observation'.join(
-            rationale_action_observation.split('Observation')[:-1]
-        )
-
-    # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
-    prompt_template = PromptTemplate.from_template(
-        FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE
-    )
-    task_template = OPENAI_PREAMBLE + TASK_WITH_COT_LEE_ET_AL.split("Rationale:")[0]
-    task_prompt_template = PromptTemplate.from_template(task_template)
-    rationale_prompt_chain = (
-        {
-            "text": itemgetter(POST_COL),
-            "summary1": itemgetter(f"{CANDIDATE_COL}_2"),
-            "summary2": itemgetter(f"{CANDIDATE_COL}_1"),
-        }
-        | task_prompt_template
-        if reverse is True
-        else {
-            "text": itemgetter(POST_COL),
-            "summary1": itemgetter(f"{CANDIDATE_COL}_1"),
-            "summary2": itemgetter(f"{CANDIDATE_COL}_2"),
-        }
-        | task_prompt_template
-    )
-    comparison_insights_chain = {
-        "task": rationale_prompt_chain,
-        "success_history": itemgetter("success_trajectory"),
-        "fail_history": itemgetter("fail_trajectory"),
-        "existing_rules": itemgetter("insights"),
-    } | prompt_template
+    (list_of_dict_dataset,
+     comparison_insights_chain) = assemble_comparison_insights_prompt_with_langchain(dataset=dataset, reverse=reverse)
 
     for prompt in list_of_dict_dataset:
-        prompt['insights'] = insights
+        prompt["insights"] = insights
         prompts_to_complete = comparison_insights_chain.invoke(prompt)
 
         tokenised_prompts = tokeniser(
@@ -976,7 +1071,7 @@ def generate_insights_with_comparisons(
                         max_new_tokens=max_new_tokens,
                         pad_token_id=tokeniser.pad_token_id,
                     )
-                    if 'causal' in labeller_model.config.architectures[0].lower()
+                    if "causal" in labeller_model.config.architectures[0].lower()
                     else GenerationConfig(max_new_tokens=max_new_tokens)
                 ),
             )
@@ -997,9 +1092,9 @@ def get_documents_from_data(
     dataset: DatasetDict, negative_examples: bool = False, reverse: bool = False
 ) -> List[Document]:
     prompt_col = (
-        'reversed_prompt_used_to_predict'
+        "reversed_prompt_used_to_predict"
         if reverse is True
-        else 'ordered_prompt_used_to_predict'
+        else "ordered_prompt_used_to_predict"
     )
     columns_needed = [
         POST_COL,
@@ -1054,46 +1149,13 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
     https://github.com/huggingface/accelerate/blob/main/examples/inference/distributed/phi2.py
     """
     batch_size = batch_size * 2
-    preamble = OPENAI_PREAMBLE
-    if insights is not None:
-        preamble += INSIGHTS.format(insights=insights)
-    if vdb_retriever is not None:
-        preamble += COT_EXAMPLE
-
-    template = preamble + TASK_WITH_COT_LEE_ET_AL
-    prompt_template = PromptTemplate.from_template(template)
-
-    chain_dict = {
-        "text": itemgetter(POST_COL),
-        "summary1": (
-            itemgetter(f"{CANDIDATE_COL}_2")
-            if reverse is True
-            else itemgetter(f"{CANDIDATE_COL}_1")
-        ),
-        "summary2": (
-            itemgetter(f"{CANDIDATE_COL}_1")
-            if reverse is True
-            else itemgetter(f"{CANDIDATE_COL}_2")
-        ),
-    }
-    # added as constant above.
-    # if insights is not None:
-    #     chain_dict.update({"insights": insights})
-    if vdb_retriever is not None:
-        chain_dict.update(
-            {
-                "example": itemgetter(POST_COL)
-                | vdb_retriever
-                | RunnableLambda(get_example_str_from_retrieved_doc)
-            }
-        )
-
-    # This chain only assembles the prompts
-    cot_with_insights_and_examples_chain = chain_dict | prompt_template
-    requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
-    list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
-        data=dataset,
-        requested_cols=requested_cols,  # data_split='train', called with subset of data.
+    (list_of_dict_dataset,
+     cot_with_insights_and_examples_chain) = (
+        assemble_cot_with_insights_and_examples_prompt_with_langchain(dataset=dataset,
+                                                                      reverse=reverse,
+                                                                      insights=insights,
+                                                                      vdb_retriever=vdb_retriever
+                                                                      )
     )
     rationale_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
@@ -1105,3 +1167,198 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
         max_new_tokens=max_new_tokens,
     )
     return rationale_completions
+
+
+# ============================================================================
+# vLLM Utility Functions (Shared across vLLM-based data generators)
+# ============================================================================
+
+def parse_vllm_logprobs_to_probabilities(
+    vllm_outputs, tokenizer, target_words: List[str] = None
+) -> List[List[float]]:
+    """
+    Extract probabilities for target tokens from vLLM outputs using logprobs.
+
+    This function extracts the actual probability distributions from vLLM's logprobs
+    for the target tokens (e.g., "1" and "2"), which is more accurate than parsing
+    text outputs.
+
+    Parameters
+    ----------
+    vllm_outputs : List[vllm.outputs.RequestOutput]
+        List of vLLM output objects containing logprobs
+    tokenizer : transformers.PreTrainedTokenizer
+        Tokenizer to encode target words to token IDs
+    target_words : List[str], optional
+        Target words to extract probabilities for (default: ["1", "2"])
+
+    Returns
+    -------
+    List[List[float]]
+        Probabilities for each target word: [[prob_word1_sample1, ...], [prob_word2_sample1, ...]]
+
+    Notes
+    -----
+    Based on vLLM logprobs extraction: https://discuss.vllm.ai/t/how-to-obtain-the-logprob-of-a-specified-token-in-a-step/1082
+
+    For each output:
+    1. Get the first generated token's logprobs dict
+    2. Look up probability for target_words[0] (e.g., "1")
+    3. Look up probability for target_words[1] (e.g., "2")
+    4. If second token not in top-k, use (1 - first_prob) as fallback
+
+    Examples
+    --------
+    >>> # Assuming vllm_outputs contains logprobs
+    >>> probs = parse_vllm_logprobs_to_probabilities(vllm_outputs, tokenizer)
+    >>> # Returns [[0.8, 0.3, ...], [0.2, 0.7, ...]] for targets ["1", "2"]
+    """
+    import math
+
+    target_words = target_words or ["1", "2"]
+    probabilities = [[] for _ in target_words]
+
+    # Encode target words to token IDs
+    target_token_ids = [
+        tokenizer.encode(word, add_special_tokens=False)[0] for word in target_words
+    ]
+
+    for output in vllm_outputs:
+        # Get logprobs for the first generated token
+        # output.outputs[0].logprobs is a list of dicts, one per token
+        if not output.outputs[0].logprobs or len(output.outputs[0].logprobs) == 0:
+            # Fallback: uniform distribution if no logprobs
+            uniform_prob = 1.0 / len(target_words)
+            for j in range(len(target_words)):
+                probabilities[j].append(uniform_prob)
+            continue
+
+        # Get the first token's logprobs (this is the prediction token)
+        first_token_logprobs = output.outputs[0].logprobs[0]
+
+        # Extract probabilities for our target tokens
+        # logprobs are log probabilities, need to convert to probabilities
+        target_probs = []
+        for token_id in target_token_ids:
+            if token_id in first_token_logprobs:
+                # Get logprob and convert to probability
+                logprob = first_token_logprobs[token_id].logprob
+                prob = math.exp(logprob)
+                target_probs.append(prob)
+            else:
+                # Token not in top-k logprobs
+                target_probs.append(None)
+
+        # Handle cases where tokens might not be in top-k
+        if target_probs[0] is not None and target_probs[1] is not None:
+            # Both tokens found, use their probabilities
+            probabilities[0].append(target_probs[0])
+            probabilities[1].append(target_probs[1])
+        elif target_probs[0] is not None and target_probs[1] is None:
+            # First token found, second not in top-k
+            # Use (1 - first_prob) as second prob
+            probabilities[0].append(target_probs[0])
+            probabilities[1].append(1.0 - target_probs[0])
+        elif target_probs[0] is None and target_probs[1] is not None:
+            # Second token found, first not in top-k
+            probabilities[0].append(1.0 - target_probs[1])
+            probabilities[1].append(target_probs[1])
+        else:
+            # Neither token found in top-k (very unlikely for "1" and "2")
+            # Fallback: uniform distribution
+            uniform_prob = 1.0 / len(target_words)
+            probabilities[0].append(uniform_prob)
+            probabilities[1].append(uniform_prob)
+
+    return probabilities
+
+
+# def add_standard_columns_to_dataset(
+#     dataset: datasets.Dataset,
+#     ai_predicted_labels: List[int],
+#     ordered_prompts: List[str],
+#     reversed_prompts: List[str],
+#     add_incorrect_prediction_column: bool = False,
+#     nth_retry: int = 0,
+#     additional_columns: Dict[str, List] = None,
+# ) -> datasets.Dataset:
+#     """
+#     Add standard columns to labeled dataset.
+#
+#     Parameters
+#     ----------
+#     dataset : Dataset
+#         Original dataset
+#     ai_predicted_labels : List[int]
+#         AI-generated preference labels
+#     ordered_prompts : List[str]
+#         Prompts with original ordering
+#     reversed_prompts : List[str]
+#         Prompts with reversed ordering
+#     add_incorrect_prediction_column : bool
+#         Whether to compare with ground truth
+#     nth_retry : int
+#         Retry iteration number
+#     additional_columns : Dict[str, List], optional
+#         Additional columns to add (e.g., reflexions, reasoning)
+#
+#     Returns
+#     -------
+#     Dataset
+#         Dataset with added columns
+#     """
+#
+#     additional_columns = additional_columns or {}
+#
+#     standard_columns = [
+#         "ai_choice",
+#         "constant_col",
+#         "ordered_prompt_used_to_predict",
+#         "reversed_prompt_used_to_predict",
+#         "incorrect_prediction",
+#         "nth_retry",
+#     ]
+#
+#     # Remove existing columns if present
+#     existing_cols = [col for col in standard_columns if col in dataset.column_names]
+#     if existing_cols:
+#         dataset = dataset.remove_columns(existing_cols)
+#
+#     # Add core columns
+#     dataset = dataset.add_column(name="ai_choice", column=ai_predicted_labels)
+#     dataset = dataset.add_column(
+#         name="constant_col",
+#         column=[1 for _ in range(len(dataset))],
+#     )
+#     dataset = dataset.add_column(
+#         name="ordered_prompt_used_to_predict", column=ordered_prompts
+#     )
+#     dataset = dataset.add_column(
+#         name="reversed_prompt_used_to_predict", column=reversed_prompts
+#     )
+#     dataset = dataset.add_column(
+#         name="nth_retry",
+#         column=[nth_retry for _ in range(len(dataset))],
+#     )
+#
+#     # Add incorrect prediction column if requested
+#     if add_incorrect_prediction_column:
+#
+#         def compare_features(example):
+#             example["incorrect_prediction"] = (
+#                 "True" if example["choice"] != example["ai_choice"] else "False"
+#             )
+#             return example
+#
+#         dataset = dataset.map(compare_features)
+#     else:
+#         dataset = dataset.add_column(
+#             name="incorrect_prediction",
+#             column=["N/A" for _ in range(len(dataset))],
+#         )
+#
+#     # Add any additional columns
+#     for col_name, col_data in additional_columns.items():
+#         dataset = dataset.add_column(name=col_name, column=col_data)
+#
+#     return dataset

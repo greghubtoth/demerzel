@@ -11,16 +11,32 @@ from langchain_community.vectorstores import Weaviate
 from langchain_core.documents import Document
 
 from nyx.constants import COMMON_OUTPUT_PATHS, PROMPTS_COL, RM_TRAIN_DATA_PATH
-from nyx.data_generation.blue_prints import (AbstractDataGenerator,
-                                             ModelAndTokeniserInConfig)
+from nyx.data_generation.blue_prints import (
+    AbstractDataGenerator,
+    AbstractVLLMDataGenerator,
+    ModelAndTokeniserInConfig,
+)
+from nyx.data_generation.prompts import ENDING_LEE_ET_AL
 from nyx.data_generation.utils import (
+    assemble_comparison_insights_prompt_with_langchain,
+    assemble_cot_prompt_with_langchain,
+    assemble_cot_with_insights_and_examples_prompt_with_langchain,
+    assemble_reflexion_prompt_with_langchain,
+    assemble_reflexion_rationale_prompt_with_langchain,
+    assemble_successful_insights_prompt_with_langchain,
     generate_cot_for_prompts_with_gpus,
     generate_cot_with_insights_and_examples_prompts_with_gpus,
-    generate_insights_successful, generate_insights_with_comparisons,
+    generate_insights_successful,
+    generate_insights_with_comparisons,
     generate_next_token_probabilities_gpus,
     generate_reflexion_and_cot_completions_with_gpus,
-    generate_unbiased_ai_preference_distribution, get_documents_from_data,
-    get_mean_of_probabilities, prompt_generator_Lee_et_al)
+    generate_unbiased_ai_preference_distribution,
+    get_documents_from_data,
+    get_mean_of_probabilities,
+    parse_vllm_logprobs_to_probabilities,
+    prompt_generator_Lee_et_al,
+    update_insights,
+)
 
 
 class BaselineLeeEtAlConfigValidator(ModelAndTokeniserInConfig):
@@ -29,6 +45,12 @@ class BaselineLeeEtAlConfigValidator(ModelAndTokeniserInConfig):
     batch_size: Optional[int] = 2
     target_words: Optional[List[str]] = None
     prompt_col: Optional[str] = PROMPTS_COL
+
+
+class BaselineLeeEtAlConfigValidatorWithVLLM(BaselineLeeEtAlConfigValidator):
+    """Extends BaselineLeeEtAlConfigValidator to include vLLM configuration"""
+
+    vllm_config: Optional[Dict[str, Any]] = None
 
 
 @deprecated(
@@ -243,7 +265,7 @@ class BaselineLeeEtAlDataGeneratorWithLangChain(CotGeneratorWithGpus):
         print(f"Labelling all data twice took {self.duration} seconds to execute.")
 
         comparison_train_dataset = self.add_relevant_columns_to_dataset(
-            dataset_to_add_new_cols=self.dataset['train'],
+            dataset_to_add_new_cols=self.dataset["train"],
             ai_predicted_label_list=ai_choice_list,
             ordered_prompt=ordered_reasoning,
             reversed_prompt=reversed_reasoning,
@@ -277,6 +299,12 @@ class ExpelAdaptationConfigValidator(ModelAndTokeniserInConfig):
     max_vdb_documents: Optional[int] = 5_000
 
 
+class ExpelAdaptationConfigValidatorWithVLLM(ExpelAdaptationConfigValidator):
+    """Extends ExpelAdaptationConfigValidator to include vLLM configuration"""
+
+    vllm_config: Optional[Dict[str, Any]] = None
+
+
 class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
     def __init__(self, config: Dict[str, Any]):
         """
@@ -289,7 +317,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.vdb_is_ready = False
         self.need_to_update_insights_step_size = True
         self.doc_ids = []
-        self.insights = ''
+        self.insights = ""
         self.config = config
         self.validate_config()
         super().__init__(self.config)
@@ -306,8 +334,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             self.set_up_vector_db()
 
     def set_up_vector_db(self):
-        model_kwargs = {'device': 'cpu'}  # self.device
-        encode_kwargs = {'normalize_embeddings': False}
+        model_kwargs = {"device": "cpu"}  # self.device
+        encode_kwargs = {"normalize_embeddings": False}
         self.embeddings = HuggingFaceEmbeddings(
             model_name=self.embedding_model_name,
             model_kwargs=model_kwargs,
@@ -318,7 +346,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
         self.distributed_state.print(
-            f'Will utilise negative examples: {self.negative_examples}.'
+            f"Will utilise negative examples: {self.negative_examples}."
         )
 
         # self.insight_retriever = vectorstore.as_retriever(
@@ -334,31 +362,30 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         target_words = ["1", "2"]
         comparison_train_dataset = Dataset.from_dict({})
 
-        for j in range(0, len(self.dataset['train']), self.insights_step_size):
-            n_insights = self.insights.split('\n')
+        for j in range(0, len(self.dataset["train"]), self.insights_step_size):
+            n_insights = self.insights.split("\n")
             self.distributed_state.print(
-                f'insights: {len(n_insights)} examples saved: {len(self.doc_ids)}'
+                f"insights: {len(n_insights)} examples saved: {len(self.doc_ids)}"
             )
-
             nth_retry = 0
 
             # optimisation: when insights generations are finished. GPU batches will be looped with accelerate.
             dataset_range = range(
-                j, min(j + self.insights_step_size, self.dataset['train'].num_rows)
+                j, min(j + self.insights_step_size, self.dataset["train"].num_rows)
             )
             if self.need_to_update_insights_step_size is False:
                 dataset_range = range(
                     next_j,
                     min(
-                        next_j + self.insights_step_size, self.dataset['train'].num_rows
+                        next_j + self.insights_step_size, self.dataset["train"].num_rows
                     ),
                 )
 
-                if next_j >= self.dataset['train'].num_rows:
+                if next_j >= self.dataset["train"].num_rows:
                     break
                 next_j += self.insights_step_size
 
-            dataset_within_step_size = self.dataset['train'].select(dataset_range)
+            dataset_within_step_size = self.dataset["train"].select(dataset_range)
             insight_generation_step_dataset = Dataset.from_dict({})
             while (
                 nth_retry <= self.n_retries and dataset_within_step_size.num_rows >= 1
@@ -406,8 +433,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                     # If early exit condition is satisfied then only COT with insights and examples are calculated.
                     # In other words, no reflexion is generated and we skip onto the next subset of data.
                     self.distributed_state.print(
-                        'early exiting because we are done generating new insights:'
-                        f'after {self.insights_early_stopping} and we are at {j}th step.'
+                        "early exiting because we are done generating new insights:"
+                        f"after {self.insights_early_stopping} and we are at {j}th step."
                     )
                     break
 
@@ -451,12 +478,12 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
             # If current dataset <= early_stop_condition then generate insights.
             if j <= self.insights_early_stopping:
-                self.distributed_state.print('About to generate insights.')
+                self.distributed_state.print("About to generate insights.")
                 self.generate_insights(
                     successful_attempts_dataset=insight_generation_step_dataset
                 )
                 if self.utilise_examples is True:
-                    self.distributed_state.print('In examples.')
+                    self.distributed_state.print("In examples.")
                     self.add_examples_to_vector_db(
                         dataset=concatenate_datasets(
                             [insight_generation_step_dataset, dataset_within_step_size]
@@ -472,7 +499,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         end = time.time()
         self.duration = round(end - start, 2)
-        self.distributed_state.print(f'INSIGHTS:\n{self.insights}')
+        self.distributed_state.print(f"INSIGHTS:\n{self.insights}")
         print(f"Labelling all data twice took {self.duration} seconds to execute.")
 
         return self.save_rm_training_data(comparison_train_dataset)
@@ -504,7 +531,6 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         )
 
     def set_up_retriever(self, documents: List[Document]):
-
         self.vectorstore = Weaviate.from_documents(
             # Documents will be added later, as examples and insights are accumulated.
             documents,
@@ -581,7 +607,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             try:
                 self.vectorstore.delete(docs_to_remove)
             except Exception as e:
-                print(f'some error occurred while deleting docs\n{e}')
+                print(f"some error occurred while deleting docs\n{e}")
 
     def generate_cot_with_1_shot_and_insights_with_gpus(
         self,
@@ -627,9 +653,9 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         # If the output is incorrect both the ordered and reversed prompts will be reflected upon.
         # Further optimisation could be to save the token probabilities to score less prompts if at least one is good.
         col_to_predict = (
-            'reversed_prompt_used_to_predict'
+            "reversed_prompt_used_to_predict"
             if reverse is True
-            else 'ordered_prompt_used_to_predict'
+            else "ordered_prompt_used_to_predict"
         )
         cot_generations = generate_reflexion_and_cot_completions_with_gpus(
             dataset=dataset,
@@ -654,4 +680,347 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
     def validate_config(self):
         config_model = ExpelAdaptationConfigValidator(**self.config)
+        self.config = dict(config_model)
+
+
+# ============================================================================
+# vLLM-Based Implementations
+# ============================================================================
+
+
+class BaselineLeeEtAlDataGeneratorWithVLLM(
+    AbstractVLLMDataGenerator,  # For vLLM infrastructure
+    BaselineLeeEtAlDataGeneratorWithLangChain,  # For Lee et al. mechanics (methods only)
+):
+    """
+    Lee et al. baseline using pure vLLM for high-performance inference.
+
+    This class uses MULTIPLE INHERITANCE to:
+    - Get vLLM infrastructure from AbstractVLLMDataGenerator
+    - Get Lee et al. mechanics (methods) from BaselineLeeEtAlDataGeneratorWithLangChain
+    - Avoid loading HF model (would conflict with vLLM GPU memory)
+
+    It ONLY overrides the low-level generation method to use vLLM:
+    - generate_cot_with_gpus() -> uses vLLM for CoT generation
+
+    Parameters
+    ----------
+    config : Dict[str, Any]
+        Configuration dictionary containing:
+        - llm_model_name: str - HuggingFace model name
+        - run_id: str - Unique run identifier
+        - dataset: DatasetDict - Dataset to label
+        - vllm_config: dict - vLLM-specific configuration
+
+    Examples
+    --------
+    >>> config = {
+    ...     'llm_model_name': 'bigscience/mt0-small',
+    ...     'run_id': 'test-run',
+    ...     'dataset': dataset,
+    ...     'vllm_config': {
+    ...         'max_tokens': 512,
+    ...         'enable_prefix_caching': True,
+    ...         'temperature': 0.0,
+    ...     }
+    ... }
+    >>> generator = BaselineLeeEtAlDataGeneratorWithVLLM(config)
+    >>> labeled_data = generator.generate_labels()
+    """
+
+    def __init__(self, config: Dict[str, Any]):
+        # DON'T call BaselineLeeEtAlDataGeneratorWithLangChain.__init__()
+        # It would load HF model into GPU, conflicting with vLLM
+
+        # Validate config using parent's validator
+        self.config = config
+        self.validate_config()
+
+        # Set attributes from config (manually, without HF model loading)
+        for key, value in self.config.items():
+            if key != "vllm_config":
+                setattr(self, key, value)
+
+        # Initialize vLLM (from AbstractVLLMDataGenerator)
+        # This will set up self.llm, self.tokenizer, self.sampling_params
+        AbstractVLLMDataGenerator.__init__(self, config)
+
+        # Set n_gpus_available (from parent's logic)
+        self.n_gpus_available = torch.cuda.device_count()
+        print(f"Number of GPUs detected as available is: {self.n_gpus_available}.")
+
+    def generate_cot_with_gpus(
+        self,
+        dataset: DatasetDict,
+        reverse: bool = False,
+        target_words: List[str] = None,
+    ) -> Tuple[List[str], List[List[float]]]:
+        """
+        Override parent method to use vLLM for CoT generation.
+
+        REUSES parent's prompt assembly logic,
+        but uses vLLM for generation instead of HF.
+        """
+        target_words = target_words if target_words is not None else ["1", "2"]
+
+        # REUSE existing LangChain chain from assemble_cot_prompt_with_langchain
+        list_of_dict_dataset, prompt_chain = assemble_cot_prompt_with_langchain(
+            dataset=self.dataset, reverse=reverse
+        )
+
+        # Extract prompts from chain for vLLM batching
+        cot_prompts = [
+            prompt.text for prompt in prompt_chain.batch(list_of_dict_dataset)
+        ]
+
+        # Generate CoT reasoning with vLLM (batched)
+        print(
+            f"Probabilities being calculated {'(reversed)' if reverse else '(ordered)'}."
+        )
+        cot_reasoning = self.generate_batch(cot_prompts)
+
+        # Assemble final prediction prompts
+        prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
+
+        # Generate predictions with vLLM (batched) - request logprobs
+        vllm_outputs = self.generate_batch(prediction_prompts, return_logprobs=True)
+
+        # Convert logprobs to probabilities
+        probabilities = parse_vllm_logprobs_to_probabilities(
+            vllm_outputs, self.tokenizer, target_words=target_words
+        )
+
+        return cot_reasoning, probabilities
+
+    def validate_config(self):
+        """Validate configuration (uses vLLM-extended validator)"""
+        config_model = BaselineLeeEtAlConfigValidatorWithVLLM(**self.config)
+        self.config = dict(config_model)
+
+
+class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
+    AbstractVLLMDataGenerator,  # For vLLM infrastructure
+    ExpelZhaoEtAlAdaptedDataGenerator,  # For ExpeL mechanics (methods only)
+):
+    """
+    ExpeL (Zhao et al. adapted) using vLLM for high-performance inference.
+
+    This class uses MULTIPLE INHERITANCE to:
+    - Get vLLM infrastructure from AbstractVLLMDataGenerator
+    - Get ExpeL mechanics (methods) from ExpelZhaoEtAlAdaptedDataGenerator
+    - Avoid loading HF model (would conflict with vLLM GPU memory)
+
+    It ONLY overrides the low-level generation methods to use vLLM:
+    - generate_cot_with_1_shot_and_insights_with_gpus() -> uses vLLM for CoT with insights/RAG
+    - generate_reflexion_and_cot_with_gpus() -> uses vLLM for reflexion
+
+    This ensures IDENTICAL behavior while getting vLLM's performance benefits.
+
+    Parameters
+    ----------
+    config : Dict[str, Any]
+        Same configuration as parent class, plus:
+        - vllm_config: dict - vLLM-specific configuration
+
+    Examples
+    --------
+    >>> config = {
+    ...     'llm_model_name': 'meta-llama/Llama-3.2-3B-Instruct',
+    ...     'run_id': 'expel-test',
+    ...     'dataset': dataset,
+    ...     'n_retries': 2,
+    ...     'insights_step_size': 100,
+    ...     'vllm_config': {'max_tokens': 1024}
+    ... }
+    >>> generator = ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(config)
+    >>> labeled_data = generator.generate_labels()
+    """
+
+    def __init__(self, config: Dict[str, Any]):
+        # DON'T call ExpelZhaoEtAlAdaptedDataGenerator.__init__()
+        # It would load HF model into GPU, conflicting with vLLM
+
+        # Validate config using parent's validator
+        self.config = config
+        self.validate_config()
+
+        # Set attributes from config (manually, without HF model loading)
+        for key, value in self.config.items():
+            if key != "vllm_config":
+                setattr(self, key, value)
+
+        # Initialize vLLM (from AbstractVLLMDataGenerator)
+        # This will set up self.llm, self.tokenizer, self.sampling_params
+        AbstractVLLMDataGenerator.__init__(self, config)
+
+        # Set up RAG/vector store if needed (from parent's logic)
+        if hasattr(self, "insights_step_size") and self.insights_step_size:
+            self.set_up_vector_db()
+
+    def generate_cot_with_1_shot_and_insights_with_gpus(
+        self,
+        dataset: DatasetDict,
+        reverse: bool = False,
+        target_words: List[str] = None,
+    ) -> Tuple[List[str], List[List[float]]]:
+        """
+        Override parent method to use vLLM for CoT generation with insights/examples.
+
+        REUSES parent's prompt assembly logic (assemble_cot_with_insights_and_examples_prompt_with_langchain),
+        but uses vLLM for generation instead of HF.
+        """
+        target_words = target_words if target_words is not None else ["1", "2"]
+
+        # Prepare insights/retriever kwargs (REUSE parent logic)
+        insights = self.insights if len(self.insights) >= 1 else None
+        vdb_retriever = self.example_retriever if self.vdb_is_ready else None
+
+        # REUSE existing LangChain utility for prompt assembly
+        list_of_dict_dataset, cot_chain = (
+            assemble_cot_with_insights_and_examples_prompt_with_langchain(
+                dataset=dataset,
+                reverse=reverse,
+                insights=insights,
+                vdb_retriever=vdb_retriever,
+            )
+        )
+
+        # Extract prompts from chain for vLLM batching
+        cot_prompts = [prompt.text for prompt in cot_chain.batch(list_of_dict_dataset)]
+
+        # Generate CoT reasoning with vLLM (batched)
+        print(
+            f"Generating CoT with insights/examples using vLLM {'(reversed)' if reverse else '(ordered)'}..."
+        )
+        cot_reasoning = self.generate_batch(cot_prompts)
+
+        # Assemble prediction prompts
+        prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
+
+        # Generate predictions with vLLM (batched) - request logprobs
+        vllm_outputs = self.generate_batch(prediction_prompts, return_logprobs=True)
+
+        # Convert logprobs to probabilities
+        probabilities = parse_vllm_logprobs_to_probabilities(
+            vllm_outputs, self.tokenizer, target_words=target_words
+        )
+
+        return cot_reasoning, probabilities
+
+    def generate_reflexion_and_cot_with_gpus(
+        self,
+        dataset: DatasetDict,
+        reverse: bool = False,
+        target_words: List[str] = None,
+    ) -> Tuple[List[str], List[List[float]]]:
+        """
+        Override parent method to use vLLM for reflexion generation.
+
+        REUSES parent's reflexion prompt assembly logic (assemble_reflexion_prompt_with_langchain
+        and assemble_reflexion_rationale_prompt_with_langchain), but uses vLLM for generation.
+        """
+        target_words = target_words if target_words is not None else ["1", "2"]
+
+        # Get the column to use (REUSE parent's logic)
+        col_to_predict = (
+            "reversed_prompt_used_to_predict"
+            if reverse is True
+            else "ordered_prompt_used_to_predict"
+        )
+
+        # STEP 1: Assemble reflexion prompts (computes "Observation:")
+        # REUSE existing LangChain utility
+        list_of_dict_dataset, reflexion_chain = (
+            assemble_reflexion_prompt_with_langchain(dataset, prompt_col=col_to_predict)
+        )
+
+        # Extract prompts from chain for vLLM batching
+        reflexion_prompts = [
+            prompt.text for prompt in reflexion_chain.batch(list_of_dict_dataset)
+        ]
+
+        # Generate reflexions with vLLM
+        print(
+            f"Generating reflexions with vLLM {'(reversed)' if reverse else '(ordered)'}..."
+        )
+        reflexion_completions = self.generate_batch(reflexion_prompts)
+
+        # STEP 2: Assemble CoT retry prompts (computes "Rationale:")
+        # REUSE existing LangChain utility
+        cot_with_reflexion_list_of_dict, cot_chain = (
+            assemble_reflexion_rationale_prompt_with_langchain(reflexion_completions)
+        )
+
+        # Extract prompts from chain for vLLM batching
+        cot_retry_prompts = [
+            prompt.text for prompt in cot_chain.batch(cot_with_reflexion_list_of_dict)
+        ]
+
+        # Generate new CoT reasoning with vLLM
+        print(
+            f"Generating CoT retries with vLLM {'(reversed)' if reverse else '(ordered)'}..."
+        )
+        cot_reasoning = self.generate_batch(cot_retry_prompts)
+
+        # Assemble prediction prompts
+        prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
+
+        # Generate predictions with vLLM (batched) - request logprobs
+        vllm_outputs = self.generate_batch(prediction_prompts, return_logprobs=True)
+
+        # Convert logprobs to probabilities
+        probabilities = parse_vllm_logprobs_to_probabilities(
+            vllm_outputs, self.tokenizer, target_words=target_words
+        )
+
+        return cot_reasoning, probabilities
+
+    def generate_insights_successful_vllm(
+        self, successful_attempts_dataset: DatasetDict, reverse: bool = False
+    ):
+        (list_of_dict_dataset, successful_insights_chain) = (
+            assemble_successful_insights_prompt_with_langchain(
+                dataset=successful_attempts_dataset, reverse=reverse
+            )
+        )
+        insights_prompts = [
+            prompt.text
+            for prompt in successful_insights_chain.batch(list_of_dict_dataset)
+        ]
+        insights_completions = self.generate_batch(insights_prompts)
+        insights = update_insights(insights_completions, self.insights)
+        return insights
+
+    def generate_insights_with_comparisons_vllm(
+        self, dataset: DatasetDict, reverse: bool = False
+    ):
+        (list_of_dict_dataset, comparison_insights_chain) = (
+            assemble_comparison_insights_prompt_with_langchain(
+                dataset=dataset, reverse=reverse
+            )
+        )
+        insights_prompts = [
+            prompt.text
+            for prompt in comparison_insights_chain.batch(list_of_dict_dataset)
+        ]
+        insights_completions = self.generate_batch(insights_prompts)
+        insights = update_insights(insights_completions, self.insights)
+        return insights
+
+    def generate_insights(
+        self, successful_attempts_dataset: DatasetDict, reverse: bool = False
+    ):
+        """
+        Override parent method to use vLLM for insights generation.
+        """
+        self.insights = self.generate_insights_successful_vllm(
+            successful_attempts_dataset, reverse
+        )
+        self.insights = self.generate_insights_with_comparisons_vllm(
+            successful_attempts_dataset, reverse
+        )
+
+    def validate_config(self):
+        """Validate configuration (uses vLLM-extended validator)"""
+        config_model = ExpelAdaptationConfigValidatorWithVLLM(**self.config)
         self.config = dict(config_model)
