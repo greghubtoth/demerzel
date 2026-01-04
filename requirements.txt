@@ -1,5 +1,6 @@
 transformers>=4.36.2
 gradio>=4.13.0
+evaluate
 rouge_score
 loralib
 peft
@@ -14,3 +15,4 @@ accelerate
 weaviate-client
 deprecated
 optimum
+vllm
