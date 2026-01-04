@@ -1,0 +1,35 @@
+[project]
+name = "demerzel"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "transformers>=4.36.2",
+    "gradio>=4.13.0",
+    "evaluate",
+    "rouge_score",
+    "loralib",
+    "peft",
+    "papermill",
+    "tqdm",
+    "trl",
+    "pydantic",
+    "numpy",
+    "scikit-learn",
+    "setuptools",
+    "accelerate",
+    "weaviate-client",
+    "vllm",
+    "deprecated",
+    "optimum",
+]
+
+[project.optional-dependencies]
+# For macOS development: vLLM build for imports/dev only (no runtime support)
+dev-macos = [
+    "vllm @ git+https://github.com/vllm-project/vllm.git",
+]
+
+[tool.uv.sources]
+vllm = { git = "https://github.com/vllm-project/vllm.git" }
