@@ -13,6 +13,5 @@ scikit-learn
 setuptools
 accelerate
 weaviate-client
-vllm
 deprecated
 optimum
