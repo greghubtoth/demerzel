@@ -797,6 +797,9 @@ class BaselineLeeEtAlDataGeneratorWithVLLM(
         config_model = BaselineLeeEtAlConfigValidatorWithVLLM(**self.config)
         self.config = dict(config_model)
 
+    def generate_labels(self):
+        return super().generate_labels()
+
 
 class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
     AbstractVLLMDataGenerator,  # For vLLM infrastructure
@@ -1024,3 +1027,6 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         """Validate configuration (uses vLLM-extended validator)"""
         config_model = ExpelAdaptationConfigValidatorWithVLLM(**self.config)
         self.config = dict(config_model)
+
+    def generate_labels(self):
+        return super().generate_labels()
