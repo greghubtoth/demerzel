@@ -93,77 +93,76 @@ config = {
 #     "max_vdb_documents": 5_0000,
 # }
 # print(config)
-data_generator = Controller(
-    labelling_method=f"{ADAPTED_EXPEL_ET_AL}_vllm",
-    # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
-    labelling_config=config,
-    data_loader=HumanEvaluatedDataLoader,
-)
-if TESTING is True:
-    # clean up <|end|> in Gemma and other CoT bits and or others, split them and replace.
-    # indices = random.sample(range(0, 92859), 48)
-    # print(indices)
-    data_generator.data_to_label["train"] = data_generator.data_to_label[
-        "train"
-    ].select(range(100))
-    # ].select(indices)
-    data_generator.data_to_label["validation"] = data_generator.data_to_label[
-        "validation"
-    ].select(range(50))
+if __name__ == "__main__":
+    data_generator = Controller(
+        labelling_method=f"{ADAPTED_EXPEL_ET_AL}_vllm",
+        # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
+        labelling_config=config,
+        data_loader=HumanEvaluatedDataLoader,
+    )
+    if TESTING is True:
+        # clean up <|end|> in Gemma and other CoT bits and or others, split them and replace.
+        # indices = random.sample(range(0, 92859), 48)
+        # print(indices)
+        data_generator.data_to_label["train"] = data_generator.data_to_label[
+            "train"
+        ].select(range(100))
+        # ].select(indices)
+        data_generator.data_to_label["validation"] = data_generator.data_to_label[
+            "validation"
+        ].select(range(50))
 
-# print(data_generator.data_to_label)
-data_generator.label_data()
-data_generator.report_on_performance()
-# (data_generator.data_to_label['train'])
+    # print(data_generator.data_to_label)
+    data_generator.label_data()
+    data_generator.report_on_performance()
+    # (data_generator.data_to_label['train'])
 
+    # In[21]:
 
-# In[21]:
+    # from typing import List
+    # from datasets import DatasetDict
+    # from pprint import pprint
+    # def dataset_dict_to_langchain_batch_consumable(data: DatasetDict,
+    #                                                requested_cols: List[str],
+    #                                                data_split: str = 'train', ) -> List[dict]:
+    #     requested_data = data[data_split]
+    #     data_for_langchain = []
+    #     for values in zip(*[requested_data[col] for col in requested_cols]):
+    #         # print(values)
+    #         row_value = {col: values[index] for index, col in enumerate(requested_cols)}
+    #         data_for_langchain.append(row_value)
 
+    #     return data_for_langchain
+    # pprint(dataset_dict_to_langchain_batch_consumable(data_generator.data_to_label, ['post', 'candidate_summary_1', 'candidate_summary_2']))
 
-# from typing import List
-# from datasets import DatasetDict
-# from pprint import pprint
-# def dataset_dict_to_langchain_batch_consumable(data: DatasetDict,
-#                                                requested_cols: List[str],
-#                                                data_split: str = 'train', ) -> List[dict]:
-#     requested_data = data[data_split]
-#     data_for_langchain = []
-#     for values in zip(*[requested_data[col] for col in requested_cols]):
-#         # print(values)
-#         row_value = {col: values[index] for index, col in enumerate(requested_cols)}
-#         data_for_langchain.append(row_value)
+    COMMON_OUTPUT_PATHS = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
+    METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=COMMON_OUTPUT_PATHS)
 
-#     return data_for_langchain
-# pprint(dataset_dict_to_langchain_batch_consumable(data_generator.data_to_label, ['post', 'candidate_summary_1', 'candidate_summary_2']))
+    if not os.path.exists(METRICS_PATH):
+        os.makedirs(METRICS_PATH)
 
-COMMON_OUTPUT_PATHS = COMMON_OUTPUT_PATHS.format(RUN_ID=RUN_ID)
-METRICS_PATH = METRICS_PATH.format(COMMON_OUTPUT_PATHS=COMMON_OUTPUT_PATHS)
+    data_path = f"{METRICS_PATH}/data-generation-info.json"
 
-if not os.path.exists(METRICS_PATH):
-    os.makedirs(METRICS_PATH)
+    drop_info = ["dataset", "run_id", "llm_model_name", "precision_name"]
 
-data_path = f"{METRICS_PATH}/data-generation-info.json"
+    results_dict = {
+        "run_id": RUN_ID,
+        "labeller_model": LABELLER_MODEL,
+        "precision": PRECISION_NAME,
+        "duration": data_generator.labelling_duration,
+        "n_gpus_available": data_generator.n_gpus_available,
+        "gpu_type": data_generator.gpu_type,
+        "method": data_generator.labelling_method,
+        "run_configuration": {
+            key: value
+            for key, value in data_generator.labelling_config.items()
+            if key not in drop_info
+        },
+    }
 
-drop_info = ["dataset", "run_id", "llm_model_name", "precision_name"]
+    with open(data_path, "w") as file:
+        json.dump(results_dict, file)
 
-results_dict = {
-    "run_id": RUN_ID,
-    "labeller_model": LABELLER_MODEL,
-    "precision": PRECISION_NAME,
-    "duration": data_generator.labelling_duration,
-    "n_gpus_available": data_generator.n_gpus_available,
-    "gpu_type": data_generator.gpu_type,
-    "method": data_generator.labelling_method,
-    "run_configuration": {
-        key: value
-        for key, value in data_generator.labelling_config.items()
-        if key not in drop_info
-    },
-}
-
-with open(data_path, "w") as file:
-    json.dump(results_dict, file)
-
-print("Data generation done and the configuration info is saved.")
-print(data_path)
+    print("Data generation done and the configuration info is saved.")
+    print(data_path)
 # # END
