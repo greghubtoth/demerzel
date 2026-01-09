@@ -37,7 +37,7 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = "float16"  # f16 for qwen and phi models.
 DEVICE = "cuda"
-LABELLER_MODEL = "Qwen/Qwen2-0.5B-Instruct"
+LABELLER_MODEL = "Qwen/Qwen3-4B" # "Qwen/Qwen2-0.5B-Instruct"
 # "google/gemma-2-27b-it"  # "microsoft/Phi-3-medium-128k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
@@ -95,7 +95,7 @@ config = {
 # print(config)
 if __name__ == "__main__":
     data_generator = Controller(
-        labelling_method=f"{BASELINE_LEE_ET_AL}",
+        labelling_method=f"{BASELINE_LEE_ET_AL}_vllm",
         # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
         labelling_config=config,
         data_loader=HumanEvaluatedDataLoader,
