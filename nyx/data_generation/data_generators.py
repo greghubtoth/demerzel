@@ -798,7 +798,11 @@ class BaselineLeeEtAlDataGeneratorWithVLLM(
         self.config = dict(config_model)
 
     def generate_labels(self):
-        return super().generate_labels()
+        """
+        Use BaselineLeeEtAlDataGeneratorWithLangChain's generate_labels implementation.
+        Explicitly calling to avoid MRO ambiguity with AbstractVLLMDataGenerator.
+        """
+        return BaselineLeeEtAlDataGeneratorWithLangChain.generate_labels(self)
 
 
 class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
@@ -1029,4 +1033,8 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         self.config = dict(config_model)
 
     def generate_labels(self):
-        return super().generate_labels()
+        """
+        Use ExpelZhaoEtAlAdaptedDataGenerator's generate_labels implementation.
+        Explicitly calling to avoid MRO ambiguity with AbstractVLLMDataGenerator.
+        """
+        return ExpelZhaoEtAlAdaptedDataGenerator.generate_labels(self)
