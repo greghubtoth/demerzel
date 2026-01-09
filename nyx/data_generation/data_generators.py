@@ -847,6 +847,13 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         # DON'T call ExpelZhaoEtAlAdaptedDataGenerator.__init__()
         # It would load HF model into GPU, conflicting with vLLM
 
+        # Initialize ExpeL-specific attributes (from parent's __init__ lines 316-320)
+        self.n_negative_examples = 0
+        self.vdb_is_ready = False
+        self.need_to_update_insights_step_size = True
+        self.doc_ids = []
+        self.insights = ""
+
         # Validate config using parent's validator
         self.config = config
         self.validate_config()
@@ -860,8 +867,17 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         # This will set up self.llm, self.tokenizer, self.sampling_params
         AbstractVLLMDataGenerator.__init__(self, config)
 
-        # Set up RAG/vector store if needed (from parent's logic)
-        if hasattr(self, "insights_step_size") and self.insights_step_size:
+        # Set insights_step_size with fallback (from parent's __init__ lines 326-331)
+        self.n_gpus_available = torch.cuda.device_count()
+        self.insights_step_size = (
+            self.insights_step_size
+            if self.insights_step_size is not None
+            else self.n_gpus_available * self.batch_size * 20
+        )
+        print(f"Number of GPUs detected as available is: {self.n_gpus_available}.")
+
+        # Set up RAG/vector store if needed (from parent's __init__ lines 333-334)
+        if self.utilise_examples is True:
             self.set_up_vector_db()
 
     def generate_cot_with_1_shot_and_insights_with_gpus(

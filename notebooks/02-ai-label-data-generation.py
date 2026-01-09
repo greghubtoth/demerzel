@@ -95,7 +95,7 @@ config = {
 # print(config)
 if __name__ == "__main__":
     data_generator = Controller(
-        labelling_method=f"{BASELINE_LEE_ET_AL}_vllm",
+        labelling_method=f"{BASELINE_LEE_ET_AL}",
         # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
         labelling_config=config,
         data_loader=HumanEvaluatedDataLoader,
