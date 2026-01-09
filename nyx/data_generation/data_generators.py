@@ -792,7 +792,7 @@ class BaselineLeeEtAlDataGeneratorWithVLLM(
             vllm_outputs, self.tokenizer, target_words=target_words
         )
 
-        return cot_reasoning, probabilities
+        return prediction_prompts, probabilities
 
     def validate_config(self):
         """Validate configuration (uses vLLM-extended validator)"""
@@ -925,6 +925,26 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
             for prompt, generation in zip(cot_prompts, cot_generations)
         ]
 
+        # Debug: Check if RATIONALES_SPLIT_STRING is present
+        from nyx.data_generation.prompts.openai_preamble_with_cot import (
+            RATIONALES_SPLIT_STRING,
+        )
+
+        sample_idx = 0 if len(cot_reasoning) > 0 else None
+        if sample_idx is not None:
+            has_split = RATIONALES_SPLIT_STRING in cot_reasoning[sample_idx]
+            print(
+                f"[DEBUG] Sample cot_reasoning contains RATIONALES_SPLIT_STRING: {has_split}"
+            )
+            if not has_split:
+                print("[WARNING] RATIONALES_SPLIT_STRING not found in prompt!")
+                print(
+                    f"[DEBUG] First 200 chars of prompt: {cot_prompts[sample_idx][:200]}..."
+                )
+                print(
+                    f"[DEBUG] First 200 chars of generation: {cot_generations[sample_idx][:200]}..."
+                )
+
         # Assemble prediction prompts
         prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
 
@@ -998,6 +1018,22 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
             f"{prompt}{generation}"
             for prompt, generation in zip(cot_retry_prompts, cot_generations)
         ]
+
+        # Debug: Check if RATIONALES_SPLIT_STRING is present (for reflexion)
+        from nyx.data_generation.prompts.openai_preamble_with_cot import (
+            RATIONALES_SPLIT_STRING,
+        )
+
+        sample_idx = 0 if len(cot_reasoning) > 0 else None
+        if sample_idx is not None:
+            has_split = RATIONALES_SPLIT_STRING in cot_reasoning[sample_idx]
+            print(
+                f"[DEBUG REFLEXION] Sample cot_reasoning contains RATIONALES_SPLIT_STRING: {has_split}"
+            )
+            if not has_split:
+                print(
+                    "[WARNING] RATIONALES_SPLIT_STRING not found in reflexion prompt!"
+                )
 
         # Assemble prediction prompts
         prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]

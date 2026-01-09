@@ -16,18 +16,25 @@ from tqdm import tqdm
 from transformers import GenerationConfig
 
 from nyx.constants import CANDIDATE_COL, POST_COL, PROMPTS_COL
-from nyx.data_generation.prompts import (ENDING_LEE_ET_AL, OPENAI_PREAMBLE,
-                                         TASK_WITH_COT_LEE_ET_AL)
+from nyx.data_generation.prompts import (
+    ENDING_LEE_ET_AL,
+    OPENAI_PREAMBLE,
+    TASK_WITH_COT_LEE_ET_AL,
+)
 from nyx.data_generation.prompts.insights import (
     ALL_SUCCESSES_INSIGHTS_TEMPLATE,
     FAIL_SUCCESS_COMPARISON_INSIGHTS_TEMPLATE,
 )
 from nyx.data_generation.prompts.model_specific_tokens import (
-    BOS_ASSISTANT_TOKEN, BOS_USER_TOKEN, EOS_TOKEN)
+    BOS_ASSISTANT_TOKEN,
+    BOS_USER_TOKEN,
+    EOS_TOKEN,
+)
 from nyx.data_generation.prompts.openai_preamble_with_cot import (
     COT_EXAMPLE,
     INSIGHTS,
-   RATIONALES_SPLIT_STRING, RETRIEVED_EXAMPLE_TEMPLATE,
+    RATIONALES_SPLIT_STRING,
+    RETRIEVED_EXAMPLE_TEMPLATE,
 )
 from nyx.data_generation.prompts.reflection import SUMMARISATION_REFLEXION_PROMPT
 
@@ -432,10 +439,10 @@ def dataset_dict_to_langchain_batch_consumable(
 
 
 def cot_prompt_decoder(tokeniser, model_outputs):
-    rational_split = 'Rational:'
+    rational_split = "Rational:"
     decoded_completions = [
         # tokeniser specific changes
-        ' '.join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, '')
+        " ".join(prompt.split(rational_split)[:-1]).replace(tokeniser.pad_token, "")
         + f" {prompt.split(rational_split)[-1].replace(tokeniser.pad_token, '').replace(EOS_TOKEN, '')}"
         + ENDING_LEE_ET_AL
         for prompt in tokeniser.batch_decode(model_outputs, skip_special_tokens=False)
@@ -461,7 +468,7 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     """
     # Since the reflexion instructions are always removed, this ensures consistency when multiple retries are attempted.
     split_string = (
-        f'{BOS_USER_TOKEN} You were unsuccessful in rating'
+        f"{BOS_USER_TOKEN} You were unsuccessful in rating"
         # f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT}"""
     )
     decoded_completions = tokeniser.batch_decode(
@@ -469,8 +476,8 @@ def reflexion_prompt_decoder(tokeniser, model_outputs):
     )
     # print('===================\n', decoded_completions)
     decoded_completions = [
-        f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, '')}
-Observation: {prompt.split(split_string)[1].split('Observation:')[1].replace(tokeniser.pad_token, '').replace(EOS_TOKEN, '')}"""
+        f"""{prompt.split(split_string)[0].replace(tokeniser.pad_token, "")}
+Observation: {prompt.split(split_string)[1].split("Observation:")[1].replace(tokeniser.pad_token, "").replace(EOS_TOKEN, "")}"""
         # tokeniser specific changes
         for prompt in decoded_completions
     ]
@@ -559,18 +566,18 @@ def assemble_cot_prompt_with_langchain(
 
     # This chain only assembles the prompts
     rationale_prompt_chain = {
-                                 "text": itemgetter(POST_COL),
-                                 "summary1": (
-                                     itemgetter(f"{CANDIDATE_COL}_2")
-                                     if reverse is True
-                                     else itemgetter(f"{CANDIDATE_COL}_1")
-                                 ),
-                                 "summary2": (
-                                     itemgetter(f"{CANDIDATE_COL}_1")
-                                     if reverse is True
-                                     else itemgetter(f"{CANDIDATE_COL}_2")
-                                 ),
-                             } | prompt_template
+        "text": itemgetter(POST_COL),
+        "summary1": (
+            itemgetter(f"{CANDIDATE_COL}_2")
+            if reverse is True
+            else itemgetter(f"{CANDIDATE_COL}_1")
+        ),
+        "summary2": (
+            itemgetter(f"{CANDIDATE_COL}_1")
+            if reverse is True
+            else itemgetter(f"{CANDIDATE_COL}_2")
+        ),
+    } | prompt_template
     requested_cols = [POST_COL, f"{CANDIDATE_COL}_1", f"{CANDIDATE_COL}_2"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
         data=dataset, requested_cols=requested_cols, data_split="train"
@@ -580,17 +587,22 @@ def assemble_cot_prompt_with_langchain(
 
 def assemble_reflexion_prompt_with_langchain(dataset, prompt_col):
     template = (
-            "{cot_prompt}{predicted_summary}"
-            + f"""{EOS_TOKEN}{SUMMARISATION_REFLEXION_PROMPT.replace('''
-    ''', ' ')}"""
+        "{cot_prompt}{predicted_summary}"
+        + f"""{EOS_TOKEN}{
+            SUMMARISATION_REFLEXION_PROMPT.replace(
+                '''
+    ''',
+                " ",
+            )
+        }"""
     )
     prompt_template = PromptTemplate.from_template(template)
 
     # This chain only assembles the prompts
     reflexion_chain = {
-                          "cot_prompt": itemgetter(prompt_col),
-                          "predicted_summary": itemgetter("ai_choice_for_prompt"),
-                      } | prompt_template
+        "cot_prompt": itemgetter(prompt_col),
+        "predicted_summary": itemgetter("ai_choice_for_prompt"),
+    } | prompt_template
 
     requested_cols = [prompt_col, "ai_choice_for_prompt"]
     list_of_dict_dataset = dataset_dict_to_langchain_batch_consumable(
@@ -598,26 +610,23 @@ def assemble_reflexion_prompt_with_langchain(dataset, prompt_col):
     )
     return list_of_dict_dataset, reflexion_chain
 
-def assemble_reflexion_rationale_prompt_with_langchain(
-    completions
-):
+
+def assemble_reflexion_rationale_prompt_with_langchain(completions):
     """To get the prompts copy the following:
     >>> prompts = [prompt.text for prompt in prompt_chain.batch(list_of_dict_dataset)]
     """
     cot_template = "{previous_attempt}\nRationale:"
     cot_prompt_template = PromptTemplate.from_template(cot_template)
     cot_chain = {
-                    "previous_attempt": itemgetter("previous_attempt_with_reflexion"),
-                } | cot_prompt_template
+        "previous_attempt": itemgetter("previous_attempt_with_reflexion"),
+    } | cot_prompt_template
     cot_with_reflexion_list_of_dict = [
         {"previous_attempt_with_reflexion": completion} for completion in completions
     ]
     return cot_with_reflexion_list_of_dict, cot_chain
 
-def assemble_successful_insights_prompt_with_langchain(
-        dataset,
-        reverse: bool
-):
+
+def assemble_successful_insights_prompt_with_langchain(dataset, reverse: bool):
     prompt_col = (
         "reversed_prompt_used_to_predict"
         if reverse is True
@@ -638,9 +647,9 @@ def assemble_successful_insights_prompt_with_langchain(
         for i in range(0, len(successes), 5)
     ]
     successful_insights_chain = {
-                                    "success_history": itemgetter("successes"),
-                                    "existing_rules": itemgetter("insights"),
-                                } | prompt_template
+        "success_history": itemgetter("successes"),
+        "existing_rules": itemgetter("insights"),
+    } | prompt_template
 
     return list_of_dict_dataset, successful_insights_chain
 
@@ -660,11 +669,11 @@ def assemble_comparison_insights_prompt_with_langchain(dataset, reverse: bool):
         rationale_action_observation = element.get(prompt_col).split(
             RATIONALES_SPLIT_STRING
         )[1]
-        element['success_trajectory'] = rationale_action_observation
+        element["success_trajectory"] = rationale_action_observation
         # Data only makes it into here if it succeeded after failure. So take everything until latest retry to get
         # failed trajectory.
-        element['fail_trajectory'] = 'Observation'.join(
-            rationale_action_observation.split('Observation')[:-1]
+        element["fail_trajectory"] = "Observation".join(
+            rationale_action_observation.split("Observation")[:-1]
         )
 
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
@@ -682,23 +691,25 @@ def assemble_comparison_insights_prompt_with_langchain(dataset, reverse: bool):
         | task_prompt_template
         if reverse is True
         else {
-                 "text": itemgetter(POST_COL),
-                 "summary1": itemgetter(f"{CANDIDATE_COL}_1"),
-                 "summary2": itemgetter(f"{CANDIDATE_COL}_2"),
-             }
-             | task_prompt_template
+            "text": itemgetter(POST_COL),
+            "summary1": itemgetter(f"{CANDIDATE_COL}_1"),
+            "summary2": itemgetter(f"{CANDIDATE_COL}_2"),
+        }
+        | task_prompt_template
     )
     comparison_insights_chain = {
-                                    "task": rationale_prompt_chain,
-                                    "success_history": itemgetter("success_trajectory"),
-                                    "fail_history": itemgetter("fail_trajectory"),
-                                    "existing_rules": itemgetter("insights"),
-                                } | prompt_template
+        "task": rationale_prompt_chain,
+        "success_history": itemgetter("success_trajectory"),
+        "fail_history": itemgetter("fail_trajectory"),
+        "existing_rules": itemgetter("insights"),
+    } | prompt_template
 
     return list_of_dict_dataset, comparison_insights_chain
 
-def assemble_cot_with_insights_and_examples_prompt_with_langchain(dataset, reverse: bool, insights: str,
-                                                                  vdb_retriever: VectorStoreRetriever):
+
+def assemble_cot_with_insights_and_examples_prompt_with_langchain(
+    dataset, reverse: bool, insights: str, vdb_retriever: VectorStoreRetriever
+):
     preamble = OPENAI_PREAMBLE
     if insights is not None:
         preamble += INSIGHTS.format(insights=insights)
@@ -728,8 +739,8 @@ def assemble_cot_with_insights_and_examples_prompt_with_langchain(dataset, rever
         chain_dict.update(
             {
                 "example": itemgetter(POST_COL)
-                           | vdb_retriever
-                           | RunnableLambda(get_example_str_from_retrieved_doc)
+                | vdb_retriever
+                | RunnableLambda(get_example_str_from_retrieved_doc)
             }
         )
 
@@ -796,7 +807,9 @@ def generate_reflexion_and_cot_completions_with_gpus(
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
     batch_size = batch_size * 2
     # computes Observation:
-    list_of_dict_dataset, reflexion_chain = assemble_reflexion_prompt_with_langchain(dataset, prompt_col)
+    list_of_dict_dataset, reflexion_chain = assemble_reflexion_prompt_with_langchain(
+        dataset, prompt_col
+    )
     completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -809,7 +822,9 @@ def generate_reflexion_and_cot_completions_with_gpus(
     )
 
     # computes Rationale:
-    cot_with_reflexion_list_of_dict, cot_chain = assemble_reflexion_rationale_prompt_with_langchain(completions)
+    cot_with_reflexion_list_of_dict, cot_chain = (
+        assemble_reflexion_rationale_prompt_with_langchain(completions)
+    )
     cot_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
         tokeniser=tokeniser,
@@ -865,9 +880,9 @@ def generate_next_token_probabilities_gpus(
     collected_distinct_predictions_1 = probabilities[0][: len(decoded_reasoning)]
     collected_distinct_predictions_2 = probabilities[1][: len(decoded_reasoning)]
     distributed_state.print(
-        f'length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: '
-        f'{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: '
-        f'{len(collected_distinct_predictions_2)}.'
+        f"length of encoded_texts: {len(decoded_reasoning)}, collected_distinct_predictions_1: "
+        f"{len(collected_distinct_predictions_1)} collected_distinct_predictions_2: "
+        f"{len(collected_distinct_predictions_2)}."
     )
     return [collected_distinct_predictions_1, collected_distinct_predictions_2]
 
@@ -919,7 +934,7 @@ class InsightActions(Enum):
 
 def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
     pattern = (
-        r'(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=\s*(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)'
+        r"(AGREE|REMOVE|EDIT|ADD) (\d+): (.+?)(?=\s*(?:AGREE|REMOVE|EDIT|ADD) \d+: |$)"
     )
     matches = re.findall(pattern, completion)
     results = [
@@ -930,7 +945,7 @@ def parse_insights_actions(completion: str) -> List[Tuple[str, str, str]]:
 
 
 def parse_insights_str_to_dict(insights_str: str) -> Dict[str, str]:
-    pattern = r'(\d+): (.+?)(?=\s*\d+:|$)'
+    pattern = r"(\d+): (.+?)(?=\s*\d+:|$)"
     matches = re.findall(pattern, insights_str)
     results = {number.strip(): string.strip() for number, string in matches}
 
@@ -989,8 +1004,11 @@ def generate_insights_successful(
     A good summarisation labeling task is ~70% accurate.
     So this method O(7N/50) slow."""
     # generating tokens is cheaper than generating token probabilities, so this is attempting to maximise GPU capacity.
-    (list_of_dict_dataset,
-     successful_insights_chain) = assemble_successful_insights_prompt_with_langchain(dataset=dataset,reverse=reverse)
+    (list_of_dict_dataset, successful_insights_chain) = (
+        assemble_successful_insights_prompt_with_langchain(
+            dataset=dataset, reverse=reverse
+        )
+    )
 
     for prompt in list_of_dict_dataset:
         prompt["insights"] = insights
@@ -1029,7 +1047,7 @@ def generate_insights_successful(
         insights = update_insights(
             insight_actions=decoded_insight_actions, insights=insights
         )
-        distributed_state.print(f'Insights after update: {insights}')
+        distributed_state.print(f"Insights after update: {insights}")
 
     return insights
 
@@ -1052,8 +1070,11 @@ def generate_insights_with_comparisons(
     Will need to quantify how often this occurs.
     But it should be a subset of the 30% of exercises."""
 
-    (list_of_dict_dataset,
-     comparison_insights_chain) = assemble_comparison_insights_prompt_with_langchain(dataset=dataset, reverse=reverse)
+    (list_of_dict_dataset, comparison_insights_chain) = (
+        assemble_comparison_insights_prompt_with_langchain(
+            dataset=dataset, reverse=reverse
+        )
+    )
 
     for prompt in list_of_dict_dataset:
         prompt["insights"] = insights
@@ -1119,8 +1140,8 @@ def get_documents_from_data(
                 # The split_string only exists for the model generated reasoning, so it makes it easy to split on.
                 "reasoning": values[3]
                 .split(RATIONALES_SPLIT_STRING)[1]
-                .replace('Preferred Summary=', '')
-                .replace(BOS_ASSISTANT_TOKEN, '')
+                .replace("Preferred Summary=", "")
+                .replace(BOS_ASSISTANT_TOKEN, "")
                 .strip(),
                 "predicted_label": values[4],
                 "end_string": end_of_example_string,
@@ -1149,13 +1170,13 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
     https://github.com/huggingface/accelerate/blob/main/examples/inference/distributed/phi2.py
     """
     batch_size = batch_size * 2
-    (list_of_dict_dataset,
-     cot_with_insights_and_examples_chain) = (
-        assemble_cot_with_insights_and_examples_prompt_with_langchain(dataset=dataset,
-                                                                      reverse=reverse,
-                                                                      insights=insights,
-                                                                      vdb_retriever=vdb_retriever
-                                                                      )
+    (list_of_dict_dataset, cot_with_insights_and_examples_chain) = (
+        assemble_cot_with_insights_and_examples_prompt_with_langchain(
+            dataset=dataset,
+            reverse=reverse,
+            insights=insights,
+            vdb_retriever=vdb_retriever,
+        )
     )
     rationale_completions = generate_tokens_with_gpus(
         labeller_model=labeller_model,
@@ -1172,6 +1193,7 @@ def generate_cot_with_insights_and_examples_prompts_with_gpus(
 # ============================================================================
 # vLLM Utility Functions (Shared across vLLM-based data generators)
 # ============================================================================
+
 
 def parse_vllm_logprobs_to_probabilities(
     vllm_outputs, tokenizer, target_words: List[str] = None
