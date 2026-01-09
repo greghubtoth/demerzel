@@ -346,9 +346,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
             embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
         # self.distributed_state.print(
-        print(
-            f"Will utilise negative examples: {self.negative_examples}."
-        )
+        print(f"Will utilise negative examples: {self.negative_examples}.")
 
         # self.insight_retriever = vectorstore.as_retriever(
         #     search_type=self.vdb_search_type,
@@ -366,9 +364,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         for j in range(0, len(self.dataset["train"]), self.insights_step_size):
             n_insights = self.insights.split("\n")
             # self.distributed_state.print(
-            print(
-                f"insights: {len(n_insights)} examples saved: {len(self.doc_ids)}"
-            )
+            print(f"insights: {len(n_insights)} examples saved: {len(self.doc_ids)}")
             nth_retry = 0
 
             # optimisation: when insights generations are finished. GPU batches will be looped with accelerate.
@@ -921,7 +917,13 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         print(
             f"Generating CoT with insights/examples using vLLM {'(reversed)' if reverse else '(ordered)'}..."
         )
-        cot_reasoning = self.generate_batch(cot_prompts)
+        cot_generations = self.generate_batch(cot_prompts)
+
+        # Concatenate prompts with generations for insights (needed for split logic)
+        cot_reasoning = [
+            f"{prompt}{generation}"
+            for prompt, generation in zip(cot_prompts, cot_generations)
+        ]
 
         # Assemble prediction prompts
         prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
@@ -989,7 +991,13 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         print(
             f"Generating CoT retries with vLLM {'(reversed)' if reverse else '(ordered)'}..."
         )
-        cot_reasoning = self.generate_batch(cot_retry_prompts)
+        cot_generations = self.generate_batch(cot_retry_prompts)
+
+        # Concatenate prompts with generations for insights (needed for split logic)
+        cot_reasoning = [
+            f"{prompt}{generation}"
+            for prompt, generation in zip(cot_retry_prompts, cot_generations)
+        ]
 
         # Assemble prediction prompts
         prediction_prompts = [f"{cot}{ENDING_LEE_ET_AL}" for cot in cot_reasoning]
