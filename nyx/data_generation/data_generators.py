@@ -322,7 +322,7 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.validate_config()
         super().__init__(self.config)
         # self.distributed_state.print(f"ExpelZhaoEtAlAdaptedDataGenerator is validated:\n{config}")
-        self.distributed_state.print(self.negative_examples)
+        # self.distributed_state.print(self.negative_examples)
         self.n_gpus_available = torch.cuda.device_count()
         self.insights_step_size = (
             self.insights_step_size
@@ -345,7 +345,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
         self.client = weaviate.Client(
             embedded_options=weaviate.embedded.EmbeddedOptions(),
         )
-        self.distributed_state.print(
+        # self.distributed_state.print(
+        print(
             f"Will utilise negative examples: {self.negative_examples}."
         )
 
@@ -364,7 +365,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         for j in range(0, len(self.dataset["train"]), self.insights_step_size):
             n_insights = self.insights.split("\n")
-            self.distributed_state.print(
+            # self.distributed_state.print(
+            print(
                 f"insights: {len(n_insights)} examples saved: {len(self.doc_ids)}"
             )
             nth_retry = 0
@@ -432,7 +434,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
                 else:
                     # If early exit condition is satisfied then only COT with insights and examples are calculated.
                     # In other words, no reflexion is generated and we skip onto the next subset of data.
-                    self.distributed_state.print(
+                    # self.distributed_state.print(
+                    print(
                         "early exiting because we are done generating new insights:"
                         f"after {self.insights_early_stopping} and we are at {j}th step."
                     )
@@ -478,12 +481,14 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
             # If current dataset <= early_stop_condition then generate insights.
             if j <= self.insights_early_stopping:
-                self.distributed_state.print("About to generate insights.")
+                # self.distributed_state.print(
+                print("About to generate insights.")
                 self.generate_insights(
                     successful_attempts_dataset=insight_generation_step_dataset
                 )
                 if self.utilise_examples is True:
-                    self.distributed_state.print("In examples.")
+                    # self.distributed_state.print(
+                    print("In examples.")
                     self.add_examples_to_vector_db(
                         dataset=concatenate_datasets(
                             [insight_generation_step_dataset, dataset_within_step_size]
@@ -499,7 +504,8 @@ class ExpelZhaoEtAlAdaptedDataGenerator(CotGeneratorWithGpus):
 
         end = time.time()
         self.duration = round(end - start, 2)
-        self.distributed_state.print(f"INSIGHTS:\n{self.insights}")
+        # self.distributed_state.print(
+        print(f"INSIGHTS:\n{self.insights}")
         print(f"Labelling all data twice took {self.duration} seconds to execute.")
 
         return self.save_rm_training_data(comparison_train_dataset)
