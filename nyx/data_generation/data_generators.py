@@ -996,10 +996,15 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
         )
         reflexion_completions = self.generate_batch(reflexion_prompts)
 
+        # Concatenate prompts with generations for insights (needed for split logic)
+        reflexion_reasoning = [
+            f"{prompt}{generation}"
+            for prompt, generation in zip(reflexion_prompts, reflexion_completions)
+        ]
         # STEP 2: Assemble CoT retry prompts (computes "Rationale:")
         # REUSE existing LangChain utility
         cot_with_reflexion_list_of_dict, cot_chain = (
-            assemble_reflexion_rationale_prompt_with_langchain(reflexion_completions)
+            assemble_reflexion_rationale_prompt_with_langchain(reflexion_reasoning)
         )
 
         # Extract prompts from chain for vLLM batching
