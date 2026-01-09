@@ -27,7 +27,7 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import BASELINE_LEE_ET_AL
+from nyx.data_generation.settings import BASELINE_LEE_ET_AL, ADAPTED_EXPEL_ET_AL
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
@@ -72,30 +72,30 @@ config = {
 }
 
 ### ADAPTED_EXPEL_ET_AL
-# config = {
-#     'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
-#     'precision_name': PRECISION_NAME,
-#     'device': DEVICE,
-#     # 'dataset': data,
-#     'batch_size': 2,
-#     'run_id': RUN_ID,
-#     'max_new_tokens': 512,
-#     "n_retries": 1,
-#     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-#     "insights_step_size": 40,
-#     # Tóth et al. turning ExpeL from MC to n-step method.
-#     "insights_early_stopping": 500,
-#     # Li et al. Negative examples are saved and can be retrieved for prompts.
-#     "utilise_examples": True,
-#     "negative_examples": True,
-#     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
-#     "vdb_search_type": "similarity",
-#     "max_vdb_documents": 5_0000,
-# }
+config = {
+    'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
+    'precision_name': PRECISION_NAME,
+    'device': DEVICE,
+    # 'dataset': data,
+    'batch_size': 2,
+    'run_id': RUN_ID,
+    'max_new_tokens': 512,
+    "n_retries": 1,
+    # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
+    "insights_step_size": 40,
+    # Tóth et al. turning ExpeL from MC to n-step method.
+    "insights_early_stopping": 500,
+    # Li et al. Negative examples are saved and can be retrieved for prompts.
+    "utilise_examples": True,
+    "negative_examples": True,
+    "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
+    "vdb_search_type": "similarity",
+    "max_vdb_documents": 5_0000,
+}
 # print(config)
 if __name__ == "__main__":
     data_generator = Controller(
-        labelling_method=f"{BASELINE_LEE_ET_AL}_vllm",
+        labelling_method=f"{ADAPTED_EXPEL_ET_AL}_vllm",
         # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
         labelling_config=config,
         data_loader=HumanEvaluatedDataLoader,
