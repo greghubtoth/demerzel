@@ -1061,6 +1061,10 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
                 dataset=successful_attempts_dataset, reverse=reverse
             )
         )
+        # Add insights key to each prompt dict (required by chain)
+        for prompt in list_of_dict_dataset:
+            prompt["insights"] = self.insights
+
         insights_prompts = [
             prompt.text
             for prompt in successful_insights_chain.batch(list_of_dict_dataset)
@@ -1077,6 +1081,10 @@ class ExpelZhaoEtAlAdaptedDataGeneratorWithVLLM(
                 dataset=dataset, reverse=reverse
             )
         )
+        # Add insights key to each prompt dict (required by chain)
+        for prompt in list_of_dict_dataset:
+            prompt["insights"] = self.insights
+
         insights_prompts = [
             prompt.text
             for prompt in comparison_insights_chain.batch(list_of_dict_dataset)
