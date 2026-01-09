@@ -113,7 +113,15 @@ if __name__ == "__main__":
         ].select(range(50))
 
     # print(data_generator.data_to_label)
-    data_generator.label_data()
+    print(
+        f"Starting labeling with {len(data_generator.data_to_label['train'])} train samples"
+    )
+    labelled_data = data_generator.label_data()
+    print(f"Labeling complete! Returned data type: {type(labelled_data)}")
+    if labelled_data is not None:
+        print(f"Labeled data has {len(labelled_data.get('train', []))} samples")
+    else:
+        print("WARNING: labelled_data is None!")
     data_generator.report_on_performance()
     # (data_generator.data_to_label['train'])
 
