@@ -27,7 +27,7 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import ADAPTED_EXPEL_ET_AL
+from nyx.data_generation.settings import BASELINE_LEE_ET_AL
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
@@ -95,7 +95,7 @@ config = {
 # print(config)
 if __name__ == "__main__":
     data_generator = Controller(
-        labelling_method=f"{ADAPTED_EXPEL_ET_AL}_vllm",
+        labelling_method=f"{BASELINE_LEE_ET_AL}_vllm",
         # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
         labelling_config=config,
         data_loader=HumanEvaluatedDataLoader,
