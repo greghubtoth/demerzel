@@ -27,7 +27,7 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import ADAPTED_EXPEL_ET_AL
+from nyx.data_generation.settings import ADAPTED_EXPEL_ET_AL, BASELINE_LEE_ET_AL
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
@@ -59,13 +59,14 @@ TESTING = True
 print(f"Employing model: {LABELLER_MODEL} on device: {DEVICE}.")
 print(f"RUN_ID: {RUN_ID}")
 # In[ ]:
-
+test_var = ADAPTED_EXPEL_ET_AL
 vllm_config_dict = {
     "quantization": "awq",
     "gpu_memory_utilization": 0.85,  # Lower for safety
-    "max_model_len": 8192,  # Increased from 4096 to handle longer insights prompts
-    "pipeline_parallel_size": 4,  # Use all 4 GPUs for distributed inference
-    "tensor_parallel_size": 1,  # Use 1 GPU per node (each model gets 1 GPU)
+    "max_model_len": 24576,  # 24K context - vLLM handles memory efficiently
+    # L40S GPUs don't have NVLINK - use pipeline parallelism per vLLM docs
+    "pipeline_parallel_size": 4,  # Split model across 4 GPUs (better for L40S)
+    "tensor_parallel_size": 1,  # 1 GPU per pipeline stage
 }
 # BASELINE_LEE_ET_AL
 config = {
@@ -80,31 +81,31 @@ config = {
 }
 
 ### ADAPTED_EXPEL_ET_AL
-config = {
-    "llm_model_name": LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
-    "precision_name": PRECISION_NAME,
-    "device": DEVICE,
-    # 'dataset': data,
-    "batch_size": 2,
-    "run_id": RUN_ID,
-    "max_new_tokens": 512,
-    "n_retries": 1,
-    # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
-    "insights_step_size": 40,
-    # Tóth et al. turning ExpeL from MC to n-step method.
-    "insights_early_stopping": 500,
-    # Li et al. Negative examples are saved and can be retrieved for prompts.
-    "utilise_examples": True,
-    "negative_examples": True,
-    "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
-    "vdb_search_type": "similarity",
-    "max_vdb_documents": 5_0000,
-    "vllm_config": vllm_config_dict,
-}
+# config = {
+#     "llm_model_name": LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
+#     "precision_name": PRECISION_NAME,
+#     "device": DEVICE,
+#     # 'dataset': data,
+#     "batch_size": 2,
+#     "run_id": RUN_ID,
+#     "max_new_tokens": 512,
+#     "n_retries": 1,
+#     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
+#     "insights_step_size": 40,
+#     # Tóth et al. turning ExpeL from MC to n-step method.
+#     "insights_early_stopping": 500,
+#     # Li et al. Negative examples are saved and can be retrieved for prompts.
+#     "utilise_examples": True,
+#     "negative_examples": True,
+#     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
+#     "vdb_search_type": "similarity",
+#     "max_vdb_documents": 5_0000,
+#     "vllm_config": vllm_config_dict,
+# }
 # print(config)
 if __name__ == "__main__":
     data_generator = Controller(
-        labelling_method=f"{ADAPTED_EXPEL_ET_AL}_vllm",
+        labelling_method=f"{BASELINE_LEE_ET_AL}_vllm",
         # ADAPTED_EXPEL_ET_AL,  # BASELINE_LEE_ET_AL,  # Tóth et al., (Ablation)
         labelling_config=config,
         data_loader=HumanEvaluatedDataLoader,
@@ -119,7 +120,7 @@ if __name__ == "__main__":
         # ].select(indices)
         data_generator.data_to_label["validation"] = data_generator.data_to_label[
             "validation"
-        ].select(range(50))
+        ].select(range(20))
 
     # print(data_generator.data_to_label)
     print(
