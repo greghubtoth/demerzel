@@ -205,8 +205,16 @@ class VLLMConfig(BaseModel):
     enable_lora: bool = False
     lora_adapter_path: Optional[str] = None
     enable_prefix_caching: bool = True
-    quantization: Optional[str] = None  # 'bitsandbytes', 'awq', 'gptq'
-    gpu_memory_utilization: float = 0.9
+    quantization: Optional[str] = None  # 'awq', 'gptq', 'fp8', 'bitsandbytes'
+    load_format: Optional[str] = None  # 'auto', 'bitsandbytes'
+    gpu_memory_utilization: float = 0.85
+    # make the below two parameters optional
+    tensor_parallel_size: Optional[int | None] = (
+        None  # Number of GPUs for tensor parallelism
+    )
+    pipeline_parallel_size: Optional[int | None] = (
+        None  # Number of nodes for pipeline parallelism
+    )
     temperature: float = 0.0
     top_k: int = 1
     max_tokens: int = 512
@@ -273,6 +281,9 @@ class AbstractVLLMDataGenerator(ABC):
             max_model_len=self.vllm_config.max_model_len,
             trust_remote_code=self.vllm_config.trust_remote_code,
             quantization=self.vllm_config.quantization,
+            load_format=self.vllm_config.load_format,
+            tensor_parallel_size=self.vllm_config.tensor_parallel_size,
+            pipeline_parallel_size=self.vllm_config.pipeline_parallel_size,
             enable_lora=self.vllm_config.enable_lora,
             enable_prefix_caching=self.vllm_config.enable_prefix_caching,
             gpu_memory_utilization=self.vllm_config.gpu_memory_utilization,

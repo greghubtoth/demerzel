@@ -37,9 +37,7 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = "float16"  # f16 for qwen and phi models.
 DEVICE = "cuda"
-LABELLER_MODEL = (
-    "Qwen/Qwen3-32B-AWQ"  # "Qwen/Qwen2-0.5B-Instruct" # "Qwen/Qwen3-4B" #
-)
+LABELLER_MODEL = "Qwen/Qwen3-32B-AWQ"  # "Qwen/Qwen2-0.5B-Instruct" # "Qwen/Qwen3-4B" #
 # "google/gemma-2-27b-it"  # "microsoft/Phi-3-medium-128k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
@@ -66,6 +64,7 @@ vllm_config_dict = {
     "quantization": "awq",
     "gpu_memory_utilization": 0.85,  # Lower for safety
     "max_model_len": 4096,
+    "tensor_parallel_size": 4,  # Use all 4 GPUs for distributed inference
 }
 # BASELINE_LEE_ET_AL
 config = {
