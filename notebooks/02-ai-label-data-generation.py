@@ -63,7 +63,7 @@ print(f"RUN_ID: {RUN_ID}")
 vllm_config_dict = {
     "quantization": "awq",
     "gpu_memory_utilization": 0.85,  # Lower for safety
-    "max_model_len": 4096,
+    "max_model_len": 8192,  # Increased from 4096 to handle longer insights prompts
     "tensor_parallel_size": 4,  # Use all 4 GPUs for distributed inference
 }
 # BASELINE_LEE_ET_AL
