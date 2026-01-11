@@ -276,19 +276,29 @@ class AbstractVLLMDataGenerator(ABC):
         print(f"Initializing vLLM for {self.llm_model_name}")
         print(f"Detected {self.n_gpus_available} GPU(s): {self.gpu_type}")
 
-        self.llm = LLM(
-            model=self.llm_model_name,
-            max_model_len=self.vllm_config.max_model_len,
-            trust_remote_code=self.vllm_config.trust_remote_code,
-            quantization=self.vllm_config.quantization,
-            load_format=self.vllm_config.load_format,
-            tensor_parallel_size=self.vllm_config.tensor_parallel_size,
-            pipeline_parallel_size=self.vllm_config.pipeline_parallel_size,
-            enable_lora=self.vllm_config.enable_lora,
-            enable_prefix_caching=self.vllm_config.enable_prefix_caching,
-            gpu_memory_utilization=self.vllm_config.gpu_memory_utilization,
-            # max_logprobs=self.vllm_config.max_logprobs,  # Maximum logprobs capability
-        )
+        # Build kwargs dictionary, excluding None values
+        llm_kwargs = {
+            "model": self.llm_model_name,
+            "max_model_len": self.vllm_config.max_model_len,
+            "trust_remote_code": self.vllm_config.trust_remote_code,
+            "enable_lora": self.vllm_config.enable_lora,
+            "enable_prefix_caching": self.vllm_config.enable_prefix_caching,
+            "gpu_memory_utilization": self.vllm_config.gpu_memory_utilization,
+        }
+
+        # Add optional parameters only if they're not None
+        if self.vllm_config.quantization is not None:
+            llm_kwargs["quantization"] = self.vllm_config.quantization
+        if self.vllm_config.load_format is not None:
+            llm_kwargs["load_format"] = self.vllm_config.load_format
+        if self.vllm_config.tensor_parallel_size is not None:
+            llm_kwargs["tensor_parallel_size"] = self.vllm_config.tensor_parallel_size
+        if self.vllm_config.pipeline_parallel_size is not None:
+            llm_kwargs["pipeline_parallel_size"] = (
+                self.vllm_config.pipeline_parallel_size
+            )
+
+        self.llm = LLM(**llm_kwargs)
 
         # Initialize tokenizer (needed for logprob parsing)
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_model_name)

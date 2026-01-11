@@ -64,7 +64,8 @@ vllm_config_dict = {
     "quantization": "awq",
     "gpu_memory_utilization": 0.85,  # Lower for safety
     "max_model_len": 8192,  # Increased from 4096 to handle longer insights prompts
-    "tensor_parallel_size": 4,  # Use all 4 GPUs for distributed inference
+    "pipeline_parallel_size": 4,  # Use all 4 GPUs for distributed inference
+    "tensor_parallel_size": 1,  # Use 1 GPU per node (each model gets 1 GPU)
 }
 # BASELINE_LEE_ET_AL
 config = {
