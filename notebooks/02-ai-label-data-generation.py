@@ -27,7 +27,7 @@ import uuid
 
 from nyx.constants import COMMON_OUTPUT_PATHS, METRICS_PATH
 from nyx.data_generation import Controller
-from nyx.data_generation.settings import BASELINE_LEE_ET_AL, ADAPTED_EXPEL_ET_AL
+from nyx.data_generation.settings import ADAPTED_EXPEL_ET_AL
 from nyx.data_loaders import HumanEvaluatedDataLoader
 
 # In[2]:
@@ -37,7 +37,9 @@ RANDOM_SEED = 42
 # PRECISION = torch.float32
 PRECISION_NAME = "float16"  # f16 for qwen and phi models.
 DEVICE = "cuda"
-LABELLER_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507" # "Qwen/Qwen2-0.5B-Instruct" # "Qwen/Qwen3-4B" #
+LABELLER_MODEL = (
+    "Qwen/Qwen3-30B-A3B-Instruct-2507"  # "Qwen/Qwen2-0.5B-Instruct" # "Qwen/Qwen3-4B" #
+)
 # "google/gemma-2-27b-it"  # "microsoft/Phi-3-medium-128k-instruct"
 # "Qwen/Qwen2-72B-Instruct-GPTQ-Int4"
 # "Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4"
@@ -60,6 +62,11 @@ print(f"Employing model: {LABELLER_MODEL} on device: {DEVICE}.")
 print(f"RUN_ID: {RUN_ID}")
 # In[ ]:
 
+vllm_config_dict = {
+    "quantization": "awq",
+    "gpu_memory_utilization": 0.85,  # Lower for safety
+    "max_model_len": 4096,
+}
 # BASELINE_LEE_ET_AL
 config = {
     "llm_model_name": LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
@@ -69,17 +76,18 @@ config = {
     "batch_size": 4,
     "run_id": RUN_ID,
     "max_new_tokens": 800,
+    "vllm_config": vllm_config_dict,
 }
 
 ### ADAPTED_EXPEL_ET_AL
 config = {
-    'llm_model_name': LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
-    'precision_name': PRECISION_NAME,
-    'device': DEVICE,
+    "llm_model_name": LABELLER_MODEL,  # LABELLER_MODEL, # GEMMA_PATH, # 70B param model
+    "precision_name": PRECISION_NAME,
+    "device": DEVICE,
     # 'dataset': data,
-    'batch_size': 2,
-    'run_id': RUN_ID,
-    'max_new_tokens': 512,
+    "batch_size": 2,
+    "run_id": RUN_ID,
+    "max_new_tokens": 512,
     "n_retries": 1,
     # Adapted Zhao et al. To generate insights, if not provided then data will dictate.
     "insights_step_size": 40,
@@ -91,6 +99,7 @@ config = {
     "embedding_model_name": "sentence-transformers/all-mpnet-base-v2",
     "vdb_search_type": "similarity",
     "max_vdb_documents": 5_0000,
+    "vllm_config": vllm_config_dict,
 }
 # print(config)
 if __name__ == "__main__":
